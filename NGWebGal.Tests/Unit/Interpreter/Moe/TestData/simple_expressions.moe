@@ -1,0 +1,24 @@
+// 基础表达式测试
+var int x = 10;
+var int y = x + 5;
+var int z = (x + y) * 2;
+
+// 布尔表达式
+bool flag = true;
+bool result = (x > 5) && (y < 20);
+
+// 函数调用表达式
+func int add(int a, int b) {
+    return a + b;
+}
+
+int sum = add(x, y);
+
+// 数组操作
+int[] numbers = {1, 2, 3, 4, 5};
+int first = numbers[0];
+numbers[1] = 10;
+
+// 类型转换
+float float_x = (float)x;
+int int_y = (int)float_x;

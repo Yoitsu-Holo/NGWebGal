@@ -1,0 +1,247 @@
+// 完整的 Moe 程序示例
+// 包含各种语法特性的综合测试
+
+// 预处理指令
+#define PI 3.141592653589793
+#define MAX_SIZE 100
+#define DEBUG true
+
+// 结构体定义
+struct Point {
+    var int x;
+    var int y;
+};
+
+struct Circle {
+    var Point center;
+    var float radius;
+};
+
+struct Person {
+    var string name;
+    var int age;
+    var float height;
+    var bool isStudent;
+};
+
+// 全局变量
+const int GLOBAL_CONST = 42;
+static int globalCounter = 0;
+var float globalTemperature = 25.5;
+
+// 工具函数
+func float calculateCircleArea(var float radius) {
+    return PI * radius * radius;
+}
+
+func float calculateDistance(var Point p1, var Point p2) {
+    int dx = p2.x - p1.x;
+    int dy = p2.y - p1.y;
+    return sqrt(dx * dx + dy * dy);
+}
+
+func bool isPointInCircle(var Point point, var Circle circle) {
+    float distance = calculateDistance(point, circle.center);
+    return distance <= circle.radius;
+}
+
+// 数学函数
+func int factorial(var int n) {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+func int fibonacci(var int n) {
+    if (n <= 1) {
+        return n;
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+func int gcd(var int a, var int b) {
+    while (b != 0) {
+        int temp = b;
+        b = a % b;
+        a = temp;
+    }
+    return a;
+}
+
+// 数组操作函数
+func int findMax(var int[] numbers) {
+    if (numbers.length == 0) {
+        return 0;
+    }
+    
+    var int max = numbers[0];
+    for (var int i = 1; i < numbers.length; i = i + 1) {
+        if (numbers[i] > max) {
+            max = numbers[i];
+        }
+    }
+    return max;
+}
+
+func float calculateAverage(var float[] values) {
+    if (values.length == 0) {
+        return 0.0;
+    }
+    
+    var float sum = 0.0;
+    for (var int i = 0; i < values.length; i = i + 1) {
+        sum = sum + values[i];
+    }
+    return sum / values.length;
+}
+
+// 字符串操作
+func string reverseString(var string str) {
+    var string result = "";
+    for (int i = str.length - 1; i >= 0; i = i - 1) {
+        result = result + str[i];
+    }
+    return result;
+}
+
+func bool isPalindrome(var string str) {
+    var string reversed = reverseString(str);
+    return str == reversed;
+}
+
+// 主程序
+func int main() {
+    // 变量声明和初始化
+    var int x = 10;
+    const int y = 20;
+    static float z = 3.14;
+    
+    // 数组操作
+    var int[] numbers = {5, 2, 8, 1, 9, 3};
+    var float[] temperatures = {22.5, 23.1, 21.8, 24.3, 22.9};
+    
+    // 结构体使用
+    var Point origin = {0, 0};
+    var Point target = {3, 4};
+    var Circle circle = {origin, 5.0};
+    
+    // 控制流示例
+    if (x > 5) {
+        // if-else 语句
+        if (y < 30) {
+            x = x * 2;
+        } else {
+            x = x / 2;
+        }
+    }
+    
+    // while 循环
+    var int counter = 0;
+    while (counter < 5) {
+        counter = counter + 1;
+    }
+    
+    // for 循环
+    for (var int i = 0; i < numbers.length; i = i + 1) {
+        numbers[i] = numbers[i] * 2;
+    }
+    
+    // do-while 循环
+    var int countdown = 3;
+    do {
+        countdown = countdown - 1;
+    } while (countdown > 0);
+    
+    // switch 语句
+    var int day = 3;
+    string dayName;
+    switch (day) {
+        case 1:
+            dayName = "Monday";
+            break;
+        case 2:
+            dayName = "Tuesday";
+            break;
+        case 3:
+            dayName = "Wednesday";
+            break;
+        case 4:
+            dayName = "Thursday";
+            break;
+        case 5:
+            dayName = "Friday";
+            break;
+        case 6:
+            dayName = "Saturday";
+            break;
+        case 7:
+            dayName = "Sunday";
+            break;
+        default:
+            dayName = "Invalid day";
+    }
+    
+    // 函数调用
+    var float area = calculateCircleArea(5.0);
+    var float distance = calculateDistance(origin, target);
+    var bool inside = isPointInCircle(target, circle);
+    
+    var int maxNumber = findMax(numbers);
+    var float avgTemp = calculateAverage(temperatures);
+    
+    var int fact = factorial(5);
+    var int fib = fibonacci(10);
+    var int commonDivisor = gcd(48, 18);
+    
+    var string reversed = reverseString("hello");
+    var bool palindrome = isPalindrome("madam");
+    
+    // 位运算
+    var int bits = 0b1010;
+    bits = bits & 0b1100;
+    bits = bits | 0b0011;
+    bits = bits ^ 0b1111;
+    bits = bits << 2;
+    bits = bits >> 1;
+    
+    // 复合赋值
+    x += 5;
+    x -= 2;
+    x *= 3;
+    x /= 2;
+    
+    // 类型转换
+    var float floatX = (float)x;
+    var int intZ = (int)z;
+    
+    // 错误处理（通过返回值）
+    if (area < 0) {
+        return -1; // 错误代码
+    }
+    
+    return 0; // 成功返回
+}
+
+// 辅助函数
+func void initializeSystem() {
+    // 系统初始化代码
+    globalCounter = 0;
+    globalTemperature = 20.0;
+}
+
+func void cleanup() {
+    // 清理资源
+    globalCounter = 0;
+}
+
+// 程序入口点
+func void programEntry() {
+    initializeSystem();
+    var int result = main();
+    cleanup();
+    
+    if (result != 0) {
+        // 处理错误
+    }
+}

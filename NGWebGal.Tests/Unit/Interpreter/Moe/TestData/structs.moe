@@ -1,0 +1,159 @@
+// 基础结构体定义
+struct Point {
+    int x;
+    int y;
+};
+
+struct Rectangle {
+    Point topLeft;
+    Point bottomRight;
+};
+
+struct Person {
+    string name;
+    int age;
+    float height;
+};
+
+// 结构体嵌套
+struct Address {
+    string street;
+    string city;
+    string zipCode;
+};
+
+struct Employee {
+    Person person;
+    Address address;
+    string department;
+    float salary;
+};
+
+// 结构体数组
+struct Student {
+    string name;
+    int id;
+    float[] grades;
+};
+
+// 结构体方法（通过函数实现）
+func float distance(Point p1, Point p2) {
+    int dx = p2.x - p1.x;
+    int dy = p2.y - p1.y;
+    return sqrt(dx * dx + dy * dy);
+}
+
+func float area(Rectangle rect) {
+    int width = rect.bottomRight.x - rect.topLeft.x;
+    int height = rect.bottomRight.y - rect.topLeft.y;
+    return width * height;
+}
+
+// 结构体使用示例
+func void testStructs() {
+    // 结构体声明和初始化
+    Point p1;
+    p1.x = 10;
+    p1.y = 20;
+    
+    Point p2 = {30, 40};
+    
+    Rectangle rect;
+    rect.topLeft = p1;
+    rect.bottomRight = p2;
+    
+    Person john;
+    john.name = "John Doe";
+    john.age = 30;
+    john.height = 1.75;
+    
+    // 结构体数组
+    Point[] points = {{0, 0}, {1, 1}, {2, 2}};
+    Student[] students = {
+        {"Alice", 1, {90.5, 85.0, 92.5}},
+        {"Bob", 2, {88.0, 91.5, 87.0}}
+    };
+    
+    // 结构体嵌套
+    Address addr;
+    addr.street = "123 Main St";
+    addr.city = "Anytown";
+    addr.zipCode = "12345";
+    
+    Employee emp;
+    emp.person = john;
+    emp.address = addr;
+    emp.department = "Engineering";
+    emp.salary = 75000.0;
+    
+    // 结构体操作
+    float dist = distance(p1, p2);
+    float rectArea = area(rect);
+    
+    // 结构体作为函数参数和返回值
+    Point center = getCenter(rect);
+    Rectangle scaled = scaleRectangle(rect, 2.0);
+}
+
+// 结构体相关函数
+func Point getCenter(Rectangle rect) {
+    Point center;
+    center.x = (rect.topLeft.x + rect.bottomRight.x) / 2;
+    center.y = (rect.topLeft.y + rect.bottomRight.y) / 2;
+    return center;
+}
+
+func Rectangle scaleRectangle(Rectangle rect, float factor) {
+    Rectangle scaled;
+    scaled.topLeft.x = (int)(rect.topLeft.x * factor);
+    scaled.topLeft.y = (int)(rect.topLeft.y * factor);
+    scaled.bottomRight.x = (int)(rect.bottomRight.x * factor);
+    scaled.bottomRight.y = (int)(rect.bottomRight.y * factor);
+    return scaled;
+}
+
+// 复杂结构体类型
+struct Matrix {
+    float[][] data;
+    int rows;
+    int cols;
+};
+
+struct TreeNode {
+    int value;
+    TreeNode left;
+    TreeNode right;
+};
+
+struct LinkedListNode {
+    int data;
+    LinkedListNode next;
+};
+
+// 类型别名（通过结构体模拟）
+struct IntList {
+    int[] items;
+};
+
+struct StringMap {
+    string[] keys;
+    string[] values;
+};
+
+// 测试复杂结构体操作
+func void testComplexStructs() {
+    Matrix mat;
+    mat.rows = 3;
+    mat.cols = 3;
+    mat.data = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+    
+    TreeNode root;
+    root.value = 1;
+    root.left.value = 2;
+    root.right.value = 3;
+    
+    LinkedListNode head;
+    head.data = 1;
+    head.next.data = 2;
+    head.next.next.data = 3;
+}

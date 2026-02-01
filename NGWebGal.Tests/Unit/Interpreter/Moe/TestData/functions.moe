@@ -1,0 +1,105 @@
+// 基础函数定义和调用
+func int add(int a, int b) {
+    return a + b;
+}
+
+func float multiply(float x, float y) {
+    return x * y;
+}
+
+func string greet(string name) {
+    return "Hello, " + name + "!";
+}
+
+// 递归函数
+func int fibonacci(int n) {
+    if (n <= 1) {
+        return n;
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+func int factorial(int n) {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+// 函数重载（通过不同参数）
+func int max(int a, int b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+func float max(float a, float b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+func int max(int a, int b, int c) {
+    return max(max(a, b), c);
+}
+
+// 高阶函数（函数作为参数）
+func int applyOperation(int a, int b, func int operation(int, int)) {
+    return operation(a, b);
+}
+
+func int customAdd(int x, int y) {
+    return x + y;
+}
+
+func int customMultiply(int x, int y) {
+    return x * y;
+}
+
+// 函数调用示例
+func void testFunctions() {
+    int sum = add(5, 3);
+    float product = multiply(2.5, 4.0);
+    string message = greet("World");
+    
+    int fib = fibonacci(10);
+    int fact = factorial(5);
+    
+    int max2 = max(10, 20);
+    float maxFloat = max(3.14, 2.71);
+    int max3 = max(1, 2, 3);
+    
+    int result1 = applyOperation(5, 3, customAdd);
+    int result2 = applyOperation(5, 3, customMultiply);
+}
+
+// 返回多个值（通过结构体）
+struct Point {
+    int x;
+    int y;
+};
+
+func Point createPoint(int x, int y) {
+    Point p;
+    p.x = x;
+    p.y = y;
+    return p;
+}
+
+// 函数指针
+func int calculate(int a, int b, func int op(int, int)) {
+    return op(a, b);
+}
+
+// 匿名函数（lambda表达式）
+func void testLambda() {
+    func int square(int x) = x * x;
+    func int cube(int x) = x * x * x;
+    
+    int squared = square(5);
+    int cubed = cube(3);
+}
