@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:NGWebGal.Editor.Converters"
+             xmlns:models="using:NGWebGal.Editor.Models"
+             x:Class="NGWebGal.Editor.Views.ToolboxPanel"
+             x:DataType="views:ToolboxPanel"
+             xmlns:views="using:NGWebGal.Editor.Views">
+
+    <UserControl.Resources>
+        <converters:WidgetTypeToBrushConverter x:Key="WidgetTypeToBrushConverter" />
+    </UserControl.Resources>
+
+    <Border Background="#F5F5F5"
+            BorderBrush="#CCCCCC"
+            BorderThickness="1"
+            CornerRadius="4"
+            Padding="8">
+        <StackPanel Spacing="8">
+            <!-- Title -->
+            <TextBlock Text="Toolbox"
+                       FontSize="16"
+                       FontWeight="Bold"
+                       Foreground="#333333" />
+
+            <!-- Separator -->
+            <Border Height="1"
+                    Background="#DDDDDD"
+                    Margin="0,4" />
+
+            <!-- Toolbox Items List -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="600">
+                <ListBox Name="ToolboxListBox"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="0">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:ToolboxItem">
+                            <Border Background="White"
+                                    BorderBrush="#DDDDDD"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Padding="8"
+                                    Cursor="Hand"
+                                    Name="ItemBorder">
+                                <Border.Styles>
+                                    <Style Selector="Border:pointerover">
+                                        <Setter Property="Background" Value="#F0F0F0" />
+                                        <Setter Property="BorderBrush" Value="#999999" />
+                                    </Style>
+                                </Border.Styles>
+
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <!-- Color indicator -->
+                                    <Border Grid.Column="0"
+                                            Width="32"
+                                            Height="32"
+                                            CornerRadius="4"
+                                            Margin="0,0,8,0"
+                                            Background="{Binding Type, Converter={StaticResource WidgetTypeToBrushConverter}}"
+                                            BorderBrush="#888888"
+                                            BorderThickness="1" />
+
+                                    <!-- Text content -->
+                                    <StackPanel Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Spacing="2">
+                                        <TextBlock Text="{Binding DisplayName}"
+                                                   FontWeight="Bold"
+                                                   FontSize="13"
+                                                   Foreground="#222222" />
+                                        <TextBlock Text="{Binding Description}"
+                                                   FontSize="11"
+                                                   Foreground="#666666" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ScrollViewer>
+        </StackPanel>
+    </Border>
+</UserControl>

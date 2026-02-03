@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="using:NGWebGal.Editor.Converters"
+        xmlns:views="using:NGWebGal.Editor.Views"
+        xmlns:vm="using:NGWebGal.Editor.ViewModels"
+        x:Class="NGWebGal.Editor.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="WebGal Editor"
+        Width="1280"
+        Height="720">
+
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:WidgetTypeToBrushConverter x:Key="WidgetTypeToBrushConverter" />
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Menu Bar (Top) -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New Layout"
+                          Command="{Binding NewLayoutCommand}"
+                          InputGesture="Ctrl+N" />
+                <MenuItem Header="_Open Layout..."
+                          Command="{Binding OpenLayoutCommand}"
+                          InputGesture="Ctrl+O" />
+                <Separator />
+                <MenuItem Header="_Save Layout"
+                          Command="{Binding SaveLayoutCommand}"
+                          InputGesture="Ctrl+S" />
+                <MenuItem Header="Save _As..."
+                          Command="{Binding SaveAsLayoutCommand}"
+                          InputGesture="Ctrl+Shift+S" />
+                <MenuItem Header="_Export TXT..."
+                          Command="{Binding ExportTxtCommand}"
+                          InputGesture="Ctrl+E" />
+                <Separator />
+                <MenuItem Header="E_xit"
+                          Click="OnExitMenuItemClick" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Delete Widget"
+                          Command="{Binding DeleteWidgetCommand}"
+                          InputGesture="Delete" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Toolbox Panel (Left) -->
+        <views:ToolboxPanel DockPanel.Dock="Left"
+                            Width="200"
+                            Margin="4" />
+
+        <!-- Property Panel (Right) -->
+        <views:PropertyPanel DockPanel.Dock="Right"
+                             Width="300"
+                             Margin="4"
+                             DataContext="{Binding}" />
+
+        <!-- Editor Canvas (Center - fills remaining space) -->
+        <views:EditorCanvas Margin="4"
+                            Widgets="{Binding Widgets}"
+                            SelectedWidget="{Binding SelectedWidget, Mode=TwoWay}"
+                            AddWidgetCommand="{Binding AddWidgetCommand}" />
+    </DockPanel>
+</Window>

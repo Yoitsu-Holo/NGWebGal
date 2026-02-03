@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="NGWebGal/NGWebGal.csproj" />
+  <Project Path="NGWebGal.Editor/NGWebGal.Editor.csproj" />
 </Solution>

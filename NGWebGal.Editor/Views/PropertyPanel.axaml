@@ -1,0 +1,205 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:NGWebGal.Editor.ViewModels"
+             x:Class="NGWebGal.Editor.Views.PropertyPanel"
+             x:DataType="vm:MainViewModel">
+
+    <Border Background="#F5F5F5"
+            BorderBrush="#CCCCCC"
+            BorderThickness="1"
+            CornerRadius="4"
+            Padding="8">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="12">
+                <!-- Title -->
+                <TextBlock Text="Properties"
+                           FontSize="16"
+                           FontWeight="Bold"
+                           Foreground="#333333" />
+
+                <!-- Separator -->
+                <Border Height="1"
+                        Background="#DDDDDD"
+                        Margin="0,4" />
+
+                <!-- No selection message -->
+                <TextBlock Text="No widget selected"
+                           FontStyle="Italic"
+                           Foreground="#999999"
+                           HorizontalAlignment="Center"
+                           Margin="0,20">
+                    <TextBlock.IsVisible>
+                        <Binding Path="SelectedWidget" Converter="{x:Static ObjectConverters.IsNull}" />
+                    </TextBlock.IsVisible>
+                </TextBlock>
+
+                <!-- Property editors (visible only when widget is selected) -->
+                <StackPanel Spacing="12">
+                    <StackPanel.IsVisible>
+                        <Binding Path="SelectedWidget" Converter="{x:Static ObjectConverters.IsNotNull}" />
+                    </StackPanel.IsVisible>
+
+                    <!-- ID (Read-only) -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="ID:"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555" />
+                        <TextBox Text="{Binding SelectedWidget.Id}"
+                                 IsReadOnly="True"
+                                 Background="#EEEEEE"
+                                 FontSize="12" />
+                    </StackPanel>
+
+                    <!-- Type (Read-only) -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Type:"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555" />
+                        <TextBox Text="{Binding SelectedWidget.Type}"
+                                 IsReadOnly="True"
+                                 Background="#EEEEEE"
+                                 FontSize="12" />
+                    </StackPanel>
+
+                    <!-- Name -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Name:"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555" />
+                        <TextBox Text="{Binding SelectedWidget.Name, Mode=TwoWay}"
+                                 Watermark="Widget name..."
+                                 FontSize="12" />
+                    </StackPanel>
+
+                    <!-- Separator -->
+                    <Border Height="1"
+                            Background="#DDDDDD"
+                            Margin="0,4" />
+
+                    <!-- Position Section -->
+                    <TextBlock Text="Position"
+                               FontWeight="Bold"
+                               Foreground="#444444"
+                               FontSize="13" />
+
+                    <!-- X Position -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="X:"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555" />
+                        <TextBox Text="{Binding SelectedWidget.X, Mode=TwoWay}"
+                                 Watermark="0"
+                                 FontSize="12" />
+                    </StackPanel>
+
+                    <!-- Y Position -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Y:"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555" />
+                        <TextBox Text="{Binding SelectedWidget.Y, Mode=TwoWay}"
+                                 Watermark="0"
+                                 FontSize="12" />
+                    </StackPanel>
+
+                    <!-- Separator -->
+                    <Border Height="1"
+                            Background="#DDDDDD"
+                            Margin="0,4" />
+
+                    <!-- Size Section -->
+                    <TextBlock Text="Size"
+                               FontWeight="Bold"
+                               Foreground="#444444"
+                               FontSize="13" />
+
+                    <!-- Width -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Width:"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555" />
+                        <TextBox Text="{Binding SelectedWidget.Width, Mode=TwoWay}"
+                                 Watermark="Minimum: 10"
+                                 FontSize="12" />
+                    </StackPanel>
+
+                    <!-- Height -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Height:"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555" />
+                        <TextBox Text="{Binding SelectedWidget.Height, Mode=TwoWay}"
+                                 Watermark="Minimum: 10"
+                                 FontSize="12" />
+                    </StackPanel>
+
+                    <!-- Separator -->
+                    <Border Height="1"
+                            Background="#DDDDDD"
+                            Margin="0,4" />
+
+                    <!-- Display Section -->
+                    <TextBlock Text="Display"
+                               FontWeight="Bold"
+                               Foreground="#444444"
+                               FontSize="13" />
+
+                    <!-- Visible -->
+                    <CheckBox IsChecked="{Binding SelectedWidget.Visible, Mode=TwoWay}"
+                              Content="Visible"
+                              FontSize="12" />
+
+                    <!-- Enable -->
+                    <CheckBox IsChecked="{Binding SelectedWidget.Enable, Mode=TwoWay}"
+                              Content="Enable"
+                              FontSize="12" />
+
+                    <!-- Separator -->
+                    <Border Height="1"
+                            Background="#DDDDDD"
+                            Margin="0,4" />
+
+                    <!-- Content Section -->
+                    <TextBlock Text="Content"
+                               FontWeight="Bold"
+                               Foreground="#444444"
+                               FontSize="13" />
+
+                    <!-- Text -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Text:"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555" />
+                        <TextBox Text="{Binding SelectedWidget.Text, Mode=TwoWay}"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 MinHeight="60"
+                                 Watermark="Enter text content..."
+                                 FontSize="12" />
+                    </StackPanel>
+
+                    <!-- Separator -->
+                    <Border Height="1"
+                            Background="#DDDDDD"
+                            Margin="0,4" />
+
+                    <!-- Layer Section -->
+                    <TextBlock Text="Layer"
+                               FontWeight="Bold"
+                               Foreground="#444444"
+                               FontSize="13" />
+
+                    <!-- ZIndex -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Z-Index:"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555" />
+                        <TextBox Text="{Binding SelectedWidget.ZIndex, Mode=TwoWay}"
+                                 Watermark="0"
+                                 FontSize="12" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>
