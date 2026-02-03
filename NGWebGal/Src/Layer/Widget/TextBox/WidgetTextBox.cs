@@ -27,6 +27,11 @@ public class WidgetTextBox : WidgetLayerBase
 		_dirty = true;
 	}
 
+	public override SKColor GetColor(int imageId = 0)
+	{
+		return TextPaint.Color;
+	}
+
 	public virtual void SetFontStyle(SKTypeface typeFace)
 	{
 		TextFont.Typeface = typeFace;

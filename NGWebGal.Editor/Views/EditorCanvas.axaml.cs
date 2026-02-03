@@ -21,6 +21,7 @@ public class EditorCanvas : Control
     private WidgetViewModel? _draggedWidget;
     private Point _dragStartPosition;
     private Point _dragStartWidgetPosition;
+    private bool _isRendering = false; // Prevent re-entrant rendering
 
     #region Avalonia Properties
 
@@ -123,10 +124,28 @@ public class EditorCanvas : Control
                 oldCollection.CollectionChanged -= OnWidgetsCollectionChanged;
             }
 
+            // Unsubscribe from old widgets' property changes
+            if (change.OldValue is IEnumerable<WidgetViewModel> oldWidgets)
+            {
+                foreach (var widget in oldWidgets)
+                {
+                    widget.PropertyChanged -= OnWidgetPropertyChanged;
+                }
+            }
+
             // Subscribe to new collection
             if (change.NewValue is INotifyCollectionChanged newCollection)
             {
                 newCollection.CollectionChanged += OnWidgetsCollectionChanged;
+            }
+
+            // Subscribe to new widgets' property changes
+            if (change.NewValue is IEnumerable<WidgetViewModel> newWidgets)
+            {
+                foreach (var widget in newWidgets)
+                {
+                    widget.PropertyChanged += OnWidgetPropertyChanged;
+                }
             }
 
             InvalidateVisual();
@@ -138,17 +157,23 @@ public class EditorCanvas : Control
     }
 
     /// <summary>
+    /// Handles property changes on individual widgets to trigger re-render
+    /// </summary>
+    private void OnWidgetPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine($"[EditorCanvas] Widget property changed: {e.PropertyName}");
+
+        // Force re-render for any property change, especially BitmapVersion
+        // BitmapVersion changes whenever InvalidateBitmap() is called
+        InvalidateVisual();
+    }
+
+    /// <summary>
     /// Handles collection changed events to trigger re-render when widgets are added/removed.
     /// </summary>
     private void OnWidgetsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        Console.WriteLine($"DEBUG [OnWidgetsCollectionChanged]: Collection changed. Action: {e.Action}");
-        if (e.NewItems != null)
-        {
-            Console.WriteLine($"DEBUG [OnWidgetsCollectionChanged]: Added {e.NewItems.Count} items");
-        }
         InvalidateVisual();
-        Console.WriteLine($"DEBUG [OnWidgetsCollectionChanged]: InvalidateVisual called");
     }
 
     /// <summary>
@@ -157,25 +182,38 @@ public class EditorCanvas : Control
     /// <param name="context">The drawing context to render to.</param>
     public override void Render(DrawingContext context)
     {
-        base.Render(context);
-
-        // Debug: Draw canvas background explicitly
-        context.DrawRectangle(new SolidColorBrush(Color.FromRgb(245, 245, 245)), null, new Rect(0, 0, Bounds.Width, Bounds.Height));
-
-        if (Widgets == null)
+        // Prevent re-entrant rendering which causes infinite loop
+        if (_isRendering)
         {
-            Console.WriteLine("DEBUG: Widgets is null");
             return;
         }
 
-        // Sort widgets by ZIndex for proper layering
-        var sortedWidgets = Widgets.OrderBy(w => w.ZIndex).ToList();
-
-        Console.WriteLine($"DEBUG: Rendering {sortedWidgets.Count} widgets");
-
-        foreach (var widget in sortedWidgets)
+        _isRendering = true;
+        try
         {
-            DrawWidget(context, widget);
+            base.Render(context);
+
+            // Draw canvas background explicitly
+            context.DrawRectangle(new SolidColorBrush(Color.FromRgb(245, 245, 245)), null, new Rect(0, 0, Bounds.Width, Bounds.Height));
+
+            if (Widgets == null)
+            {
+                return;
+            }
+
+            // Sort widgets by ZIndex for proper layering
+            var sortedWidgets = Widgets.OrderBy(w => w.ZIndex).ToList();
+
+            // Render ALL widgets using traditional Avalonia rendering
+            // CoreLayer bitmap caching is handled in DrawWidget
+            foreach (var widget in sortedWidgets)
+            {
+                DrawWidget(context, widget);
+            }
+        }
+        finally
+        {
+            _isRendering = false;
         }
     }
 
@@ -188,58 +226,80 @@ public class EditorCanvas : Control
     {
         var rect = new Rect(widget.X, widget.Y, widget.Width, widget.Height);
 
-        Console.WriteLine($"DEBUG: Drawing {widget.Type} at ({widget.X}, {widget.Y}) size ({widget.Width}, {widget.Height})");
+        // Try to get cached bitmap from CoreLayer first
+        var cachedBitmap = widget.GetCachedBitmap();
 
-        // Get fill color based on widget type
-        var fillBrush = GetBrushForWidgetType(widget.Type);
+        if (cachedBitmap != null)
+        {
+            // Render using the cached CoreLayer bitmap
+            using var bitmap = new Avalonia.Media.Imaging.Bitmap(
+                Avalonia.Platform.PixelFormat.Bgra8888,
+                Avalonia.Platform.AlphaFormat.Premul,
+                cachedBitmap.GetPixels(),
+                new Avalonia.PixelSize(cachedBitmap.Width, cachedBitmap.Height),
+                new Avalonia.Vector(96, 96),
+                cachedBitmap.RowBytes);
 
-        Console.WriteLine($"DEBUG: Color for {widget.Type}: {((SolidColorBrush)fillBrush).Color}");
+            context.DrawImage(bitmap, rect);
 
-        // Determine border: selected widgets get thicker blue border
-        var isSelected = widget == SelectedWidget;
-        var borderBrush = isSelected ? Brushes.Blue : Brushes.Black;
-        var borderPen = new Pen(borderBrush, isSelected ? 3 : 2);
+            // Draw selection border if needed
+            if (widget == SelectedWidget)
+            {
+                var borderPen = new Pen(Brushes.Blue, 3);
+                context.DrawRectangle(null, borderPen, rect);
+            }
+        }
+        else
+        {
+            // Fall back to traditional rendering (color blocks)
+            var fillBrush = GetBrushForWidgetType(widget.Type);
 
-        // Draw filled rectangle
-        context.DrawRectangle(fillBrush, borderPen, rect);
+            // Determine border: selected widgets get thicker blue border
+            var isSelected = widget == SelectedWidget;
+            var borderBrush = isSelected ? Brushes.Blue : Brushes.Black;
+            var borderPen = new Pen(borderBrush, isSelected ? 3 : 2);
 
-        // Draw type and name labels with better visibility
-        var typeface = new Typeface("Inter");
-        var fontSize = 12;
-        var foreground = Brushes.Black;
+            // Draw filled rectangle
+            context.DrawRectangle(fillBrush, borderPen, rect);
 
-        var typeText = new FormattedText(
-            widget.Type.ToString(),
-            System.Globalization.CultureInfo.CurrentCulture,
-            FlowDirection.LeftToRight,
-            typeface,
-            fontSize,
-            foreground);
+            // Draw type and name labels with better visibility
+            var typeface = new Typeface("Inter");
+            var fontSize = 12;
+            var foreground = Brushes.Black;
 
-        var nameText = new FormattedText(
-            widget.Name,
-            System.Globalization.CultureInfo.CurrentCulture,
-            FlowDirection.LeftToRight,
-            typeface,
-            fontSize - 1,
-            foreground);
+            var typeText = new FormattedText(
+                widget.Type.ToString(),
+                System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                typeface,
+                fontSize,
+                foreground);
 
-        // Position labels inside the widget
-        var typePosition = new Point(widget.X + 4, widget.Y + 4);
-        var namePosition = new Point(widget.X + 4, widget.Y + 4 + fontSize + 2);
+            var nameText = new FormattedText(
+                widget.Name,
+                System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                typeface,
+                fontSize - 1,
+                foreground);
 
-        // Draw semi-transparent white background for text (better readability)
-        var typeBgRect = new Rect(typePosition.X - 2, typePosition.Y - 1,
-                                   typeText.Width + 4, typeText.Height + 2);
-        var nameBgRect = new Rect(namePosition.X - 2, namePosition.Y - 1,
-                                   nameText.Width + 4, nameText.Height + 2);
+            // Position labels inside the widget
+            var typePosition = new Point(widget.X + 4, widget.Y + 4);
+            var namePosition = new Point(widget.X + 4, widget.Y + 4 + fontSize + 2);
 
-        var textBackgroundBrush = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255));
-        context.DrawRectangle(textBackgroundBrush, null, typeBgRect);
-        context.DrawRectangle(textBackgroundBrush, null, nameBgRect);
+            // Draw semi-transparent white background for text (better readability)
+            var typeBgRect = new Rect(typePosition.X - 2, typePosition.Y - 1,
+                                       typeText.Width + 4, typeText.Height + 2);
+            var nameBgRect = new Rect(namePosition.X - 2, namePosition.Y - 1,
+                                       nameText.Width + 4, nameText.Height + 2);
 
-        context.DrawText(typeText, typePosition);
-        context.DrawText(nameText, namePosition);
+            var textBackgroundBrush = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255));
+            context.DrawRectangle(textBackgroundBrush, null, typeBgRect);
+            context.DrawRectangle(textBackgroundBrush, null, nameBgRect);
+
+            context.DrawText(typeText, typePosition);
+            context.DrawText(nameText, namePosition);
+        }
     }
 
     /// <summary>
@@ -376,12 +436,9 @@ public class EditorCanvas : Control
     /// </summary>
     private void OnDrop(object? sender, DragEventArgs e)
     {
-        Console.WriteLine("DEBUG [OnDrop]: Drop event triggered");
-
         #pragma warning disable CS0618 // Type or member is obsolete
         if (!e.Data.Contains("WidgetType"))
         {
-            Console.WriteLine("DEBUG [OnDrop]: No WidgetType in drag data");
             return;
         }
 
@@ -392,19 +449,10 @@ public class EditorCanvas : Control
         // Get drop position
         var dropPosition = e.GetPosition(this);
 
-        Console.WriteLine($"DEBUG [OnDrop]: Dropping {widgetType} at ({dropPosition.X}, {dropPosition.Y})");
-        Console.WriteLine($"DEBUG [OnDrop]: AddWidgetCommand is {(AddWidgetCommand == null ? "NULL" : "not null")}");
-
         // Execute AddWidgetCommand with type and position
         if (AddWidgetCommand?.CanExecute((widgetType, dropPosition)) == true)
         {
-            Console.WriteLine($"DEBUG [OnDrop]: Executing AddWidgetCommand");
             AddWidgetCommand.Execute((widgetType, dropPosition));
-            Console.WriteLine($"DEBUG [OnDrop]: Command executed");
-        }
-        else
-        {
-            Console.WriteLine($"DEBUG [OnDrop]: Command CanExecute returned false or command is null");
         }
 
         e.Handled = true;

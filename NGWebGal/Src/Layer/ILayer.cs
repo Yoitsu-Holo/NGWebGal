@@ -11,9 +11,12 @@ public interface ILayer : IHandler
 	public void Render(SKCanvas canvas, bool force);
 
 	// 图片处理
-	public void SetImage(SKBitmap image, int imageId);
-	public void SetImage(SKBitmap image, IRect imageWindow, int imageId);
 	public void SetColor(SKColor color, int imageId);
+	public SKColor GetColor(int imageId = 0);
+
+	public int[] GetImageIds();
+	public void SetImage(SKBitmap image, int imageId, IRect? imageWindow = null);
+	public SKImage? GetImage(int imageId = 0);
 
 	// 动画处理
 	public void AddAnimation(int id, IAnimation animation);

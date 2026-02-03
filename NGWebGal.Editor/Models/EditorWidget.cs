@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
+using SkiaSharp;
 
 namespace NGWebGal.Editor.Models;
 
@@ -74,4 +76,52 @@ public class EditorWidget
     /// </summary>
     [XmlAttribute]
     public int ZIndex { get; set; }
+
+    /// <summary>
+    /// Shadow state for image file paths (not serialized).
+    /// Key is the property name (e.g., "Image"), value is the file path.
+    /// </summary>
+    [XmlIgnore]
+    public Dictionary<string, string> ImagePaths { get; set; } = new();
+
+    /// <summary>
+    /// Shadow state for image source information with crop rectangles (not serialized).
+    /// Key is imageId, value is (originalPath, subRect).
+    /// Used by multi-image editors to track file source and cropping metadata.
+    /// </summary>
+    [XmlIgnore]
+    public Dictionary<int, (string path, SKRectI subRect)> ImageInfos { get; set; } = new();
+
+    /// <summary>
+    /// Shadow state for color properties (not serialized).
+    /// </summary>
+    [XmlIgnore]
+    public EditorColor? Color { get; set; }
+}
+
+/// <summary>
+/// Serializable representation of SKColor for editor shadow state.
+/// </summary>
+public struct EditorColor
+{
+    public byte A { get; set; }
+    public byte R { get; set; }
+    public byte G { get; set; }
+    public byte B { get; set; }
+
+    /// <summary>
+    /// Converts this EditorColor to an SKColor.
+    /// </summary>
+    public SKColor ToSKColor() => new(R, G, B, A);
+
+    /// <summary>
+    /// Creates an EditorColor from an SKColor.
+    /// </summary>
+    public static EditorColor FromSKColor(SKColor color) => new()
+    {
+        A = color.Alpha,
+        R = color.Red,
+        G = color.Green,
+        B = color.Blue
+    };
 }

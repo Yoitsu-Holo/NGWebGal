@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SkiaSharp;
 using NGWebGal.Animations;
+using NGWebGal.Extensions;
 using NGWebGal.Handler;
 using NGWebGal.Types;
 
@@ -43,9 +45,33 @@ public class LayerBase : HandlerBase, ILayer
 
 	#region 自身设置
 	// 设置图片属性 (不作为基本属性设置)
-	public virtual void SetImage(SKBitmap image, int imageId = 0) => throw new NotImplementedException();
-	public virtual void SetImage(SKBitmap image, IRect imageWindow, int imageId = 0) => throw new NotImplementedException();
+
+	/// <summary>
+	/// Sets image from bitmap with optional image window
+	/// </summary>
+	public virtual void SetImage(SKBitmap image, int imageId, IRect? imageWindow = null)
+		=> throw new NotImplementedException();
+
 	public virtual void SetColor(SKColor color, int imageId = 0) => throw new NotImplementedException();
+
+	/// <summary>
+	/// Gets a copy of the color at the specified image ID.
+	/// Default implementation returns Transparent.
+	/// Override in subclasses that support color.
+	/// </summary>
+	public virtual SKColor GetColor(int imageId = 0) => SKColors.Transparent;
+
+	/// <summary>
+	/// Gets the image at the specified image ID.
+	/// Default implementation returns null.
+	/// Override in subclasses that support images.
+	/// </summary>
+	public virtual SKImage? GetImage(int imageId = 0) => null;
+
+	/// <summary>
+	/// Gets all image IDs currently stored
+	/// </summary>
+	public virtual int[] GetImageIds() => Array.Empty<int>();
 
 	public virtual void ResetAnimationData() { _animationData = new(); }
 	public virtual void AddAnimation(int id, IAnimation animation) => _animation[id] = animation;

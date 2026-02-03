@@ -1,0 +1,106 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
+             x:Class="NGWebGal.Editor.Controls.PropertyEditors.ColorPropertyEditor"
+             HorizontalAlignment="Stretch">
+    <Grid ColumnDefinitions="*,Auto" Margin="1" HorizontalAlignment="Stretch">
+        <!-- Left side: ARGB vertical layout -->
+        <StackPanel Grid.Column="0" Spacing="2">
+            <!-- Title -->
+            <TextBlock x:Name="PropertyNameLabel"
+                       FontSize="12"
+                       FontWeight="Bold"
+                       Margin="0,0,0,2" />
+
+            <!-- A (Alpha) -->
+            <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Grid.Column="0" Text="A:" VerticalAlignment="Center"
+                           Margin="0,0,4,0" FontSize="12" Width="20"/>
+                <NumericUpDown Grid.Column="1"
+                               Name="ANumeric"
+                               Minimum="0"
+                               Maximum="255"
+                               Increment="1"
+                               FormatString="F0"
+                               MinWidth="32"
+                               Height="16"
+                               FontSize="12"
+                               ShowButtonSpinner="True"
+                               ButtonSpinnerLocation="Right"
+                               HorizontalAlignment="Stretch" />
+            </Grid>
+
+            <!-- R (Red) -->
+            <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Grid.Column="0" Text="R:" VerticalAlignment="Center"
+                           Margin="0,0,4,0" FontSize="12" Width="20"/>
+                <NumericUpDown Grid.Column="1"
+                               Name="RNumeric"
+                               Minimum="0"
+                               Maximum="255"
+                               Increment="1"
+                               FormatString="F0"
+                               MinWidth="32"
+                               Height="16"
+                               FontSize="12"
+                               ShowButtonSpinner="True"
+                               ButtonSpinnerLocation="Right"
+                               HorizontalAlignment="Stretch" />
+            </Grid>
+
+            <!-- G (Green) -->
+            <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Grid.Column="0" Text="G:" VerticalAlignment="Center"
+                           Margin="0,0,4,0" FontSize="12" Width="20"/>
+                <NumericUpDown Grid.Column="1"
+                               Name="GNumeric"
+                               Minimum="0"
+                               Maximum="255"
+                               Increment="1"
+                               FormatString="F0"
+                               MinWidth="32"
+                               Height="16"
+                               FontSize="12"
+                               ShowButtonSpinner="True"
+                               ButtonSpinnerLocation="Right"
+                               HorizontalAlignment="Stretch" />
+            </Grid>
+
+            <!-- B (Blue) -->
+            <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Grid.Column="0" Text="B:" VerticalAlignment="Center"
+                           Margin="0,0,4,0" FontSize="12" Width="20"/>
+                <NumericUpDown Grid.Column="1"
+                               Name="BNumeric"
+                               Minimum="0"
+                               Maximum="255"
+                               Increment="1"
+                               FormatString="F0"
+                               MinWidth="32"
+                               Height="16"
+                               FontSize="12"
+                               ShowButtonSpinner="True"
+                               ButtonSpinnerLocation="Right"
+                               HorizontalAlignment="Stretch" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Right side: Color preview 36x36 with checkerboard -->
+        <Border Grid.Column="1"
+                Width="36" Height="36"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="3"
+                Margin="8,0,0,0"
+                VerticalAlignment="Center">
+            <Panel>
+                <!-- Checkerboard background -->
+                <Image Name="CheckerboardImage" Stretch="Fill" />
+                <!-- Color overlay -->
+                <Border Name="ColorPreview" />
+            </Panel>
+        </Border>
+    </Grid>
+</UserControl>

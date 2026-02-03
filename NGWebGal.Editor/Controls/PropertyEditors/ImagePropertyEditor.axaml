@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="100"
+             x:Class="NGWebGal.Editor.Controls.PropertyEditors.ImagePropertyEditor"
+             HorizontalAlignment="Stretch">
+    <StackPanel Orientation="Vertical" Spacing="2" HorizontalAlignment="Stretch">
+        <TextBlock x:Name="PropertyNameLabel" FontWeight="Medium" FontSize="12" />
+
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <!-- Thumbnail with checkerboard background -->
+            <Border Grid.Column="0"
+                    Width="45" Height="45"
+                    BorderBrush="Gray"
+                    BorderThickness="1"
+                    Margin="0,0,4,0">
+                <Panel>
+                    <!-- Checkerboard background -->
+                    <Image Name="CheckerboardImage" Stretch="Fill" />
+                    <!-- Image thumbnail -->
+                    <Image Name="ThumbnailImage" Stretch="Uniform" />
+                </Panel>
+            </Border>
+
+            <!-- File path display -->
+            <TextBlock Grid.Column="1"
+                       Name="FilePathText"
+                       FontSize="12"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       Margin="0,0,4,0" />
+
+            <!-- Browse button -->
+            <Button Grid.Column="2"
+                    Name="BrowseButton"
+                    Content="Browse..."
+                    FontSize="12"
+                    Height="16"
+                    Padding="4,2"
+                    HorizontalAlignment="Stretch"
+                    Margin="0,0,2,0" />
+
+            <!-- Clear button -->
+            <Button Grid.Column="3"
+                    Name="ClearButton"
+                    Content="Clear"
+                    FontSize="12"
+                    Height="16"
+                    Padding="4,2"
+                    HorizontalAlignment="Stretch" />
+        </Grid>
+    </StackPanel>
+</UserControl>

@@ -8,197 +8,85 @@
             BorderBrush="#CCCCCC"
             BorderThickness="1"
             CornerRadius="4"
-            Padding="8">
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="12">
+            Padding="6">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="8">
                 <!-- Title -->
                 <TextBlock Text="Properties"
-                           FontSize="16"
+                           FontSize="14"
                            FontWeight="Bold"
                            Foreground="#333333" />
 
                 <!-- Separator -->
                 <Border Height="1"
                         Background="#DDDDDD"
-                        Margin="0,4" />
+                        Margin="0,2" />
 
                 <!-- No selection message -->
                 <TextBlock Text="No widget selected"
                            FontStyle="Italic"
+                           FontSize="12"
                            Foreground="#999999"
                            HorizontalAlignment="Center"
-                           Margin="0,20">
+                           Margin="0,14">
                     <TextBlock.IsVisible>
                         <Binding Path="SelectedWidget" Converter="{x:Static ObjectConverters.IsNull}" />
                     </TextBlock.IsVisible>
                 </TextBlock>
 
-                <!-- Property editors (visible only when widget is selected) -->
-                <StackPanel Spacing="12">
-                    <StackPanel.IsVisible>
-                        <Binding Path="SelectedWidget" Converter="{x:Static ObjectConverters.IsNotNull}" />
-                    </StackPanel.IsVisible>
+                <!-- Dynamic property editors grouped by type hierarchy -->
+                <ContentControl DataContext="{Binding PropertyPanelVM}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch">
+                    <ContentControl.IsVisible>
+                        <Binding Path="SelectedLayer" Converter="{x:Static ObjectConverters.IsNotNull}" />
+                    </ContentControl.IsVisible>
 
-                    <!-- ID (Read-only) -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="ID:"
-                                   FontWeight="SemiBold"
-                                   Foreground="#555555" />
-                        <TextBox Text="{Binding SelectedWidget.Id}"
-                                 IsReadOnly="True"
-                                 Background="#EEEEEE"
-                                 FontSize="12" />
-                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding PropertyGroups}"
+                                  HorizontalAlignment="Stretch">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:PropertyGroupViewModel">
+                                <Expander IsExpanded="{Binding IsExpanded}"
+                                          Background="White"
+                                          BorderBrush="#BBBBBB"
+                                          BorderThickness="1"
+                                          CornerRadius="3"
+                                          Margin="0,0,0,6"
+                                          HorizontalAlignment="Stretch"
+                                          HorizontalContentAlignment="Stretch">
+                                    <Expander.Header>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding TypeName}"
+                                                       FontWeight="Bold"
+                                                       FontSize="12"
+                                                       Foreground="#444444" />
+                                            <TextBlock Text="{Binding HierarchyDepth, StringFormat='(depth {0})'}"
+                                                       FontSize="10"
+                                                       Foreground="#888888"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Expander.Header>
 
-                    <!-- Type (Read-only) -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Type:"
-                                   FontWeight="SemiBold"
-                                   Foreground="#555555" />
-                        <TextBox Text="{Binding SelectedWidget.Type}"
-                                 IsReadOnly="True"
-                                 Background="#EEEEEE"
-                                 FontSize="12" />
-                    </StackPanel>
-
-                    <!-- Name -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Name:"
-                                   FontWeight="SemiBold"
-                                   Foreground="#555555" />
-                        <TextBox Text="{Binding SelectedWidget.Name, Mode=TwoWay}"
-                                 Watermark="Widget name..."
-                                 FontSize="12" />
-                    </StackPanel>
-
-                    <!-- Separator -->
-                    <Border Height="1"
-                            Background="#DDDDDD"
-                            Margin="0,4" />
-
-                    <!-- Position Section -->
-                    <TextBlock Text="Position"
-                               FontWeight="Bold"
-                               Foreground="#444444"
-                               FontSize="13" />
-
-                    <!-- X Position -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="X:"
-                                   FontWeight="SemiBold"
-                                   Foreground="#555555" />
-                        <TextBox Text="{Binding SelectedWidget.X, Mode=TwoWay}"
-                                 Watermark="0"
-                                 FontSize="12" />
-                    </StackPanel>
-
-                    <!-- Y Position -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Y:"
-                                   FontWeight="SemiBold"
-                                   Foreground="#555555" />
-                        <TextBox Text="{Binding SelectedWidget.Y, Mode=TwoWay}"
-                                 Watermark="0"
-                                 FontSize="12" />
-                    </StackPanel>
-
-                    <!-- Separator -->
-                    <Border Height="1"
-                            Background="#DDDDDD"
-                            Margin="0,4" />
-
-                    <!-- Size Section -->
-                    <TextBlock Text="Size"
-                               FontWeight="Bold"
-                               Foreground="#444444"
-                               FontSize="13" />
-
-                    <!-- Width -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Width:"
-                                   FontWeight="SemiBold"
-                                   Foreground="#555555" />
-                        <TextBox Text="{Binding SelectedWidget.Width, Mode=TwoWay}"
-                                 Watermark="Minimum: 10"
-                                 FontSize="12" />
-                    </StackPanel>
-
-                    <!-- Height -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Height:"
-                                   FontWeight="SemiBold"
-                                   Foreground="#555555" />
-                        <TextBox Text="{Binding SelectedWidget.Height, Mode=TwoWay}"
-                                 Watermark="Minimum: 10"
-                                 FontSize="12" />
-                    </StackPanel>
-
-                    <!-- Separator -->
-                    <Border Height="1"
-                            Background="#DDDDDD"
-                            Margin="0,4" />
-
-                    <!-- Display Section -->
-                    <TextBlock Text="Display"
-                               FontWeight="Bold"
-                               Foreground="#444444"
-                               FontSize="13" />
-
-                    <!-- Visible -->
-                    <CheckBox IsChecked="{Binding SelectedWidget.Visible, Mode=TwoWay}"
-                              Content="Visible"
-                              FontSize="12" />
-
-                    <!-- Enable -->
-                    <CheckBox IsChecked="{Binding SelectedWidget.Enable, Mode=TwoWay}"
-                              Content="Enable"
-                              FontSize="12" />
-
-                    <!-- Separator -->
-                    <Border Height="1"
-                            Background="#DDDDDD"
-                            Margin="0,4" />
-
-                    <!-- Content Section -->
-                    <TextBlock Text="Content"
-                               FontWeight="Bold"
-                               Foreground="#444444"
-                               FontSize="13" />
-
-                    <!-- Text -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Text:"
-                                   FontWeight="SemiBold"
-                                   Foreground="#555555" />
-                        <TextBox Text="{Binding SelectedWidget.Text, Mode=TwoWay}"
-                                 AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 MinHeight="60"
-                                 Watermark="Enter text content..."
-                                 FontSize="12" />
-                    </StackPanel>
-
-                    <!-- Separator -->
-                    <Border Height="1"
-                            Background="#DDDDDD"
-                            Margin="0,4" />
-
-                    <!-- Layer Section -->
-                    <TextBlock Text="Layer"
-                               FontWeight="Bold"
-                               Foreground="#444444"
-                               FontSize="13" />
-
-                    <!-- ZIndex -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Z-Index:"
-                                   FontWeight="SemiBold"
-                                   Foreground="#555555" />
-                        <TextBox Text="{Binding SelectedWidget.ZIndex, Mode=TwoWay}"
-                                 Watermark="0"
-                                 FontSize="12" />
-                    </StackPanel>
-                </StackPanel>
+                                    <Border Background="#FAFAFA"
+                                            Padding="8,6">
+                                        <ItemsControl ItemsSource="{Binding Editors}"
+                                                      HorizontalAlignment="Stretch">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <ContentControl Content="{Binding Control}"
+                                                                    Margin="0,0,0,4"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    HorizontalContentAlignment="Stretch" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Border>
+                                </Expander>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ContentControl>
             </StackPanel>
         </ScrollViewer>
     </Border>

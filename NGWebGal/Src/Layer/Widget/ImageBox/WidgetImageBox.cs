@@ -1,3 +1,4 @@
+using System;
 using SkiaSharp;
 using NGWebGal.Extensions;
 using NGWebGal.Types;
@@ -12,16 +13,30 @@ public class WidgetImageBox : WidgetLayerBase
 	private SKBitmap _imageBuffer = new();
 	private SKBitmap? _renderBuffer;
 
-	public override void SetImage(SKBitmap image, int imageId = 0)
+	public override void SetImage(SKBitmap image, int imageId, IRect? imageWindow = null)
 	{
-		_imageBuffer = image;
+		if (imageWindow != null && (imageWindow.W != 0 || imageWindow.H != 0))
+		{
+			_imageBuffer = image.SubBitmap(imageWindow);
+		}
+		else
+		{
+			_imageBuffer = image;
+		}
 		_dirty = true;
 	}
 
-	public override void SetImage(SKBitmap image, IRect imageWindow, int imageId = 0)
+	public override int[] GetImageIds()
 	{
-		_imageBuffer = image.SubBitmap(imageWindow);
-		_dirty = true;
+		return _imageBuffer.IsNull() ? Array.Empty<int>() : new[] { 0 };
+	}
+
+	public override SKImage? GetImage(int imageId = 0)
+	{
+		if (_renderBuffer == null || _renderBuffer.IsNull())
+			return null;
+
+		return SKImage.FromBitmap(_renderBuffer);
 	}
 
 	public override void Render(SKCanvas canvas, bool force)

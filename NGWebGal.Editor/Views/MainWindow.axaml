@@ -7,14 +7,15 @@
         x:DataType="vm:MainViewModel"
         Title="WebGal Editor"
         Width="1280"
-        Height="720">
+        Height="720"
+        Background="#FFFFFF">
 
     <Window.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converters:WidgetTypeToBrushConverter x:Key="WidgetTypeToBrushConverter" />
     </Window.Resources>
 
-    <DockPanel>
+    <DockPanel Background="#F0F0F0">
         <!-- Menu Bar (Top) -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
@@ -52,7 +53,7 @@
 
         <!-- Property Panel (Right) -->
         <views:PropertyPanel DockPanel.Dock="Right"
-                             Width="300"
+                             Width="350"
                              Margin="4"
                              DataContext="{Binding}" />
 

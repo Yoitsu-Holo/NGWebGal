@@ -2,6 +2,8 @@ using System;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using NGWebGal.Editor.Models;
+using NGWebGal.Layer;
+using SkiaSharp;
 
 namespace NGWebGal.Editor.ViewModels;
 
@@ -11,7 +13,72 @@ namespace NGWebGal.Editor.ViewModels;
 public partial class WidgetViewModel : ObservableObject, IDisposable
 {
     private readonly MainViewModel _mainViewModel;
+    private readonly EditorWidget _model; // Store original EditorWidget instance
     private bool _disposed;
+
+    /// <summary>
+    /// Gets or sets the Core Layer instance for rendering.
+    /// </summary>
+    public ILayer? CoreLayer { get; set; }
+
+    /// <summary>
+    /// Cached bitmap rendered from CoreLayer
+    /// </summary>
+    private SKBitmap? _cachedBitmap;
+    private bool _bitmapDirty = true;
+
+    /// <summary>
+    /// Dummy property to trigger PropertyChanged notifications for bitmap updates
+    /// </summary>
+    [ObservableProperty]
+    private int _bitmapVersion;
+
+    /// <summary>
+    /// Gets the cached bitmap, rendering it if necessary
+    /// </summary>
+    public SKBitmap? GetCachedBitmap()
+    {
+        if (CoreLayer == null)
+            return null;
+
+        // Check if we need to re-render
+        if (_bitmapDirty || _cachedBitmap == null ||
+            _cachedBitmap.Width != Width || _cachedBitmap.Height != Height)
+        {
+            // Dispose old bitmap
+            _cachedBitmap?.Dispose();
+
+            // Create new bitmap
+            _cachedBitmap = new SKBitmap(Math.Max(1, Width), Math.Max(1, Height));
+            using var canvas = new SKCanvas(_cachedBitmap);
+            canvas.Clear(SKColors.Transparent);
+
+            // Update layer properties
+            CoreLayer.Position = new NGWebGal.Types.IVector(0, 0); // Render at 0,0 in the bitmap
+            CoreLayer.Size = new NGWebGal.Types.IVector(Width, Height);
+
+            // IMPORTANT: DoAnimation initializes colors and animation data
+            CoreLayer.DoAnimation(0);
+
+            // Render to bitmap
+            CoreLayer.Render(canvas, force: true);
+
+            _bitmapDirty = false;
+        }
+
+        return _cachedBitmap;
+    }
+
+    /// <summary>
+    /// Marks the cached bitmap as dirty (needs re-render)
+    /// </summary>
+    public void InvalidateBitmap()
+    {
+        System.Diagnostics.Debug.WriteLine($"[WidgetViewModel] InvalidateBitmap called for widget {Name} (ID: {Id})");
+        _bitmapDirty = true;
+        BitmapVersion++; // Trigger PropertyChanged via ObservableProperty
+        System.Diagnostics.Debug.WriteLine($"[WidgetViewModel] Bitmap invalidated and property change notified (version: {BitmapVersion})");
+    }
 
     /// <summary>
     /// Gets or sets the unique identifier for this widget.
@@ -89,6 +156,7 @@ public partial class WidgetViewModel : ObservableObject, IDisposable
     public WidgetViewModel(EditorWidget widget, MainViewModel mainViewModel)
     {
         _mainViewModel = mainViewModel;
+        _model = widget; // Store reference to original EditorWidget
 
         _id = widget.Id;
         _type = widget.Type;
@@ -102,8 +170,15 @@ public partial class WidgetViewModel : ObservableObject, IDisposable
         _text = widget.Text;
         _zIndex = widget.ZIndex;
 
-        // Subscribe to property changes to mark layout as dirty
-        _propertyChangedHandler = (_, _) => _mainViewModel.MarkDirty();
+        // Subscribe to property changes to sync back to model and mark dirty
+        _propertyChangedHandler = (_, e) =>
+        {
+            if (e.PropertyName != null)
+            {
+                SyncPropertyToModel(e.PropertyName);
+            }
+            _mainViewModel.MarkDirty();
+        };
         PropertyChanged += _propertyChangedHandler;
     }
 
@@ -113,20 +188,42 @@ public partial class WidgetViewModel : ObservableObject, IDisposable
     /// <returns>A new EditorWidget instance with current property values.</returns>
     public EditorWidget ToModel()
     {
-        return new EditorWidget
+        // Sync all properties to ensure model is up-to-date
+        _model.Id = Id;
+        _model.Type = Type;
+        _model.Name = Name;
+        _model.X = X;
+        _model.Y = Y;
+        _model.Width = Width;
+        _model.Height = Height;
+        _model.Visible = Visible;
+        _model.Enable = Enable;
+        _model.Text = Text;
+        _model.ZIndex = ZIndex;
+
+        // Return the original instance, preserving shadow state (ImageInfos, Color, etc.)
+        return _model;
+    }
+
+    /// <summary>
+    /// Syncs a single property change back to the EditorWidget model.
+    /// </summary>
+    private void SyncPropertyToModel(string propertyName)
+    {
+        switch (propertyName)
         {
-            Id = Id,
-            Type = Type,
-            Name = Name,
-            X = X,
-            Y = Y,
-            Width = Width,
-            Height = Height,
-            Visible = Visible,
-            Enable = Enable,
-            Text = Text,
-            ZIndex = ZIndex
-        };
+            case nameof(Id): _model.Id = Id; break;
+            case nameof(Type): _model.Type = Type; break;
+            case nameof(Name): _model.Name = Name; break;
+            case nameof(X): _model.X = X; break;
+            case nameof(Y): _model.Y = Y; break;
+            case nameof(Width): _model.Width = Width; break;
+            case nameof(Height): _model.Height = Height; break;
+            case nameof(Visible): _model.Visible = Visible; break;
+            case nameof(Enable): _model.Enable = Enable; break;
+            case nameof(Text): _model.Text = Text; break;
+            case nameof(ZIndex): _model.ZIndex = ZIndex; break;
+        }
     }
 
     /// <summary>
@@ -140,6 +237,9 @@ public partial class WidgetViewModel : ObservableObject, IDisposable
             {
                 PropertyChanged -= _propertyChangedHandler;
             }
+            _cachedBitmap?.Dispose();
+            _cachedBitmap = null;
+            CoreLayer = null;
             _disposed = true;
         }
     }

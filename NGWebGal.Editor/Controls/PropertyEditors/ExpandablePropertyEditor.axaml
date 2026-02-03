@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:editors="using:NGWebGal.Editor.Controls.PropertyEditors"
+             x:Class="NGWebGal.Editor.Controls.PropertyEditors.ExpandablePropertyEditor"
+             HorizontalAlignment="Stretch">
+    <Expander x:Name="PropertyExpander"
+              IsExpanded="False"
+              Background="#FAFAFA"
+              Margin="0,4"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Stretch">
+        <Expander.Header>
+            <TextBlock x:Name="HeaderTextBlock"
+                       FontWeight="SemiBold"
+                       Foreground="#555555" />
+        </Expander.Header>
+
+        <Border Background="White"
+                BorderBrush="#DDDDDD"
+                BorderThickness="1"
+                Padding="8"
+                Margin="4,4,0,0">
+            <ItemsControl x:Name="ChildPropertiesControl"
+                          HorizontalAlignment="Stretch">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="editors:IPropertyEditor">
+                        <ContentControl Content="{Binding Control}"
+                                        Margin="0,0,0,4"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+    </Expander>
+</UserControl>

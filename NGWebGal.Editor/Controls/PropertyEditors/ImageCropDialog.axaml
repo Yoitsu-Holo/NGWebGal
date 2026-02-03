@@ -1,0 +1,91 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+        x:Class="NGWebGal.Editor.Controls.PropertyEditors.ImageCropDialog"
+        Title="Image Crop"
+        Width="600" Height="500"
+        CanResize="false"
+        WindowStartupLocation="CenterOwner">
+  <Grid RowDefinitions="*,Auto" Margin="12">
+    <!-- Loading indicator -->
+    <Border x:Name="LoadingOverlay" Grid.Row="0" Background="#80000000"
+            ZIndex="100" IsVisible="True">
+      <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12">
+        <TextBlock Text="Loading image..." FontSize="16" Foreground="White"
+                   HorizontalAlignment="Center"/>
+      </StackPanel>
+    </Border>
+
+    <!-- Main content -->
+    <Grid x:Name="MainContent" Grid.Row="0" ColumnDefinitions="*,*" ColumnSpacing="12" IsVisible="False">
+      <!-- Left: Original image -->
+      <StackPanel Grid.Column="0" Spacing="8">
+        <TextBlock Text="Original Preview" FontSize="12" FontWeight="Bold"/>
+        <Border BorderBrush="Gray" BorderThickness="1" Background="White"
+                Height="300">
+          <Image x:Name="OriginalImage" Stretch="Uniform"/>
+        </Border>
+      </StackPanel>
+
+      <!-- Right: Crop params and preview -->
+      <StackPanel Grid.Column="1" Spacing="8">
+        <TextBlock Text="Crop Parameters" FontSize="12" FontWeight="Bold"/>
+
+        <!-- X -->
+        <Grid ColumnDefinitions="Auto,*">
+          <TextBlock Grid.Column="0" Text="X:" VerticalAlignment="Center"
+                     Margin="0,0,8,0" FontSize="12" Width="20"/>
+          <NumericUpDown Grid.Column="1" x:Name="XNumeric"
+                         Value="0" Minimum="0" Increment="1"
+                         Height="24" FontSize="12"
+                         HorizontalAlignment="Stretch"/>
+        </Grid>
+
+        <!-- Y -->
+        <Grid ColumnDefinitions="Auto,*">
+          <TextBlock Grid.Column="0" Text="Y:" VerticalAlignment="Center"
+                     Margin="0,0,8,0" FontSize="12" Width="20"/>
+          <NumericUpDown Grid.Column="1" x:Name="YNumeric"
+                         Value="0" Minimum="0" Increment="1"
+                         Height="24" FontSize="12"
+                         HorizontalAlignment="Stretch"/>
+        </Grid>
+
+        <!-- Width -->
+        <Grid ColumnDefinitions="Auto,*">
+          <TextBlock Grid.Column="0" Text="W:" VerticalAlignment="Center"
+                     Margin="0,0,8,0" FontSize="12" Width="20"/>
+          <NumericUpDown Grid.Column="1" x:Name="WidthNumeric"
+                         Value="0" Minimum="0" Increment="1"
+                         Height="24" FontSize="12"
+                         HorizontalAlignment="Stretch"/>
+        </Grid>
+
+        <!-- Height -->
+        <Grid ColumnDefinitions="Auto,*">
+          <TextBlock Grid.Column="0" Text="H:" VerticalAlignment="Center"
+                     Margin="0,0,8,0" FontSize="12" Width="20"/>
+          <NumericUpDown Grid.Column="1" x:Name="HeightNumeric"
+                         Value="0" Minimum="0" Increment="1"
+                         Height="24" FontSize="12"
+                         HorizontalAlignment="Stretch"/>
+        </Grid>
+
+        <TextBlock Text="Crop Preview" FontSize="12" FontWeight="Bold" Margin="0,8,0,0"/>
+        <Border BorderBrush="Gray" BorderThickness="1" Background="White"
+                Height="140">
+          <Image x:Name="CroppedImage" Stretch="Uniform"/>
+        </Border>
+      </StackPanel>
+    </Grid>
+
+    <!-- Buttons -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal"
+                HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+      <Button x:Name="OkButton" Content="OK" Width="80" Height="28"/>
+      <Button x:Name="CancelButton" Content="Cancel" Width="80" Height="28"/>
+    </StackPanel>
+  </Grid>
+</Window>

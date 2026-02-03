@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="200"
+             x:Class="NGWebGal.Editor.Controls.PropertyEditors.MultiImagePropertyEditor"
+             HorizontalAlignment="Stretch">
+  <StackPanel Spacing="4" Margin="1" HorizontalAlignment="Stretch">
+    <!-- Header with property name -->
+    <TextBlock x:Name="PropertyNameLabel" FontWeight="Medium" FontSize="12" />
+
+    <!-- ID selector with add/delete buttons -->
+    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="4">
+      <TextBlock Grid.Column="0" Text="Image ID:" VerticalAlignment="Center" FontSize="12"/>
+      <ComboBox Grid.Column="1"
+                x:Name="ImageIdComboBox"
+                Height="24"
+                FontSize="12"
+                HorizontalAlignment="Stretch"/>
+      <Button Grid.Column="2" x:Name="AddButton" Content="添加" Width="40" Height="24"
+              FontSize="12" Padding="2"/>
+      <Button Grid.Column="3" x:Name="DeleteButton" Content="删除" Width="40" Height="24"
+              FontSize="12" Padding="2"/>
+    </Grid>
+
+    <!-- Thumbnail preview -->
+    <Border BorderBrush="Gray" BorderThickness="1"
+            Background="White" CornerRadius="2"
+            Width="64" Height="64" HorizontalAlignment="Center">
+      <Image x:Name="ThumbnailImage" Stretch="Uniform"/>
+    </Border>
+
+    <!-- Image info -->
+    <TextBlock x:Name="PathLabel" Text="路径: (未设置)"
+               FontSize="10" TextWrapping="Wrap" Foreground="#666666"/>
+    <TextBlock x:Name="SizeLabel" Text="尺寸: -"
+               FontSize="10" Foreground="#666666"/>
+    <TextBlock x:Name="CropLabel" Text="裁剪: -"
+               FontSize="10" Foreground="#666666"/>
+
+    <!-- Action button -->
+    <Button x:Name="SelectButton" Content="选择文件..."
+            Height="24" FontSize="12" Padding="4,2"
+            HorizontalAlignment="Stretch"/>
+  </StackPanel>
+</UserControl>

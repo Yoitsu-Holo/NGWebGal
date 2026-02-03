@@ -20,6 +20,12 @@ public partial class MainViewModel : ObservableObject
     private readonly ILayoutSerializer _layoutSerializer;
     private readonly TxtExporter _txtExporter;
     private readonly IStorageProvider? _storageProvider;
+    private readonly CoreWidgetFactory _coreFactory = new();
+
+    /// <summary>
+    /// Gets the property panel view model
+    /// </summary>
+    public PropertyPanelViewModel PropertyPanelVM { get; }
 
     /// <summary>
     /// Gets the collection of all widgets in the current layout.
@@ -65,6 +71,9 @@ public partial class MainViewModel : ObservableObject
         _layoutSerializer = layoutSerializer ?? throw new ArgumentNullException(nameof(layoutSerializer));
         _txtExporter = txtExporter ?? throw new ArgumentNullException(nameof(txtExporter));
         _storageProvider = storageProvider;
+
+        // Initialize PropertyPanelVM
+        PropertyPanelVM = new PropertyPanelViewModel(this);
     }
 
     /// <summary>
@@ -119,7 +128,10 @@ public partial class MainViewModel : ObservableObject
             Widgets.Clear();
             foreach (var widget in layout.Widgets)
             {
-                Widgets.Add(new WidgetViewModel(widget, this));
+                var vm = new WidgetViewModel(widget, this);
+                // TEMPORARY: Disable CoreLayer creation to diagnose freeze
+                // vm.CoreLayer = _coreFactory.CreateLayer(widget);
+                Widgets.Add(vm);
             }
 
             IsDirty = false;
@@ -263,15 +275,10 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AddWidget(object? parameter)
     {
-        Console.WriteLine($"DEBUG [AddWidget]: Called with parameter type: {parameter?.GetType().Name ?? "null"}");
-
         if (parameter is not (WidgetType type, Avalonia.Point position))
         {
-            Console.WriteLine($"DEBUG [AddWidget]: Parameter type mismatch! Expected (WidgetType, Point), got {parameter?.GetType().Name ?? "null"}");
             return;
         }
-
-        Console.WriteLine($"DEBUG [AddWidget]: Creating {type} at ({position.X}, {position.Y})");
 
         var widget = new EditorWidget
         {
@@ -287,11 +294,9 @@ public partial class MainViewModel : ObservableObject
         };
 
         var viewModel = new WidgetViewModel(widget, this);
-        Console.WriteLine($"DEBUG [AddWidget]: Adding widget to collection. Current count: {Widgets.Count}");
+        viewModel.CoreLayer = _coreFactory.CreateLayer(widget);
 
         Widgets.Add(viewModel);
-
-        Console.WriteLine($"DEBUG [AddWidget]: Widget added. New count: {Widgets.Count}");
 
         SelectedWidget = viewModel;
         IsDirty = true;
@@ -335,5 +340,8 @@ public partial class MainViewModel : ObservableObject
     {
         // Notify that DeleteWidget command can execute state may have changed
         DeleteWidgetCommand.NotifyCanExecuteChanged();
+
+        // Update PropertyPanelVM with the selected widget's CoreLayer
+        PropertyPanelVM.LoadLayer(value?.CoreLayer);
     }
 }

@@ -16,6 +16,11 @@ public class WidgetColorBox : WidgetLayerBase
 		_dirty = true;
 	}
 
+	public override SKColor GetColor(int imageId = 0)
+	{
+		return _color; // SKColor is a struct, so this is already a copy
+	}
+
 	public override void Render(SKCanvas canvas, bool force)
 	{
 		if (Status == LayerStatus.Unvisable)

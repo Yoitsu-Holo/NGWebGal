@@ -7,7 +7,10 @@ public static class SKBitmapExtensions
 	/// <summary>
 	/// Extracts a sub-rectangle from a bitmap
 	/// </summary>
-	public static SKBitmap SubBitmap(this SKBitmap source, SKRectI subRect)
+	/// <param name="source">Source bitmap to extract from</param>
+	/// <param name="subRect">Rectangle to extract</param>
+	/// <param name="quality">Filter quality for the drawing operation (default: Medium)</param>
+	public static SKBitmap SubBitmap(this SKBitmap source, SKRectI subRect, SKFilterQuality quality = SKFilterQuality.Medium)
 	{
 		if (subRect.Width == 0 || subRect.Height == 0)
 			subRect = new(0, 0, source.Width, source.Height);
@@ -18,8 +21,9 @@ public static class SKBitmapExtensions
 		// Create a canvas and bind it to the cropped bitmap
 		using (var canvas = new SKCanvas(croppedBitmap))
 		{
-			// Draw the cropped portion
-			canvas.DrawBitmap(source, subRect, new SKRect(0, 0, subRect.Width, subRect.Height));
+			// Use specified quality for drawing
+			using var paint = new SKPaint { FilterQuality = quality };
+			canvas.DrawBitmap(source, subRect, new SKRect(0, 0, subRect.Width, subRect.Height), paint);
 		}
 
 		return croppedBitmap;

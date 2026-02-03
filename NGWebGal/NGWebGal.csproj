@@ -8,11 +8,16 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  <!-- Default to Library (for use by Editor), unless explicitly set to run standalone -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' And '$(RunStandalone)' == 'true'">
     <OutputType>Exe</OutputType>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And '$(RunStandalone)' == 'true'">
     <OutputType>WinExe</OutputType>
+  </PropertyGroup>
+  <!-- Default: Build as Library when referenced -->
+  <PropertyGroup Condition="'$(RunStandalone)' != 'true'">
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

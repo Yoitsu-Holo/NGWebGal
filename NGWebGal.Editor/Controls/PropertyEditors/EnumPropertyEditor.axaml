@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="NGWebGal.Editor.Controls.PropertyEditors.EnumPropertyEditor"
+             HorizontalAlignment="Stretch">
+    <StackPanel Spacing="2" HorizontalAlignment="Stretch">
+        <TextBlock x:Name="LabelTextBlock"
+                   FontWeight="SemiBold"
+                   FontSize="12"
+                   Foreground="#555555" />
+        <ComboBox x:Name="ValueComboBox"
+                  FontSize="12"
+                  Height="16"
+                  HorizontalAlignment="Stretch" />
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="NGWebGal.Editor.Controls.PropertyEditors.PaddingPropertyEditor"
+             HorizontalAlignment="Stretch">
+    <StackPanel Spacing="2" HorizontalAlignment="Stretch">
+        <TextBlock x:Name="LabelTextBlock"
+                   FontWeight="SemiBold"
+                   FontSize="12"
+                   Foreground="#555555"
+                   Margin="0,0,0,2" />
+
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto"
+              RowSpacing="2" ColumnSpacing="4">
+
+            <!-- Top -->
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Text="Top:"
+                       FontSize="12"
+                       VerticalAlignment="Center"
+                       Foreground="#666666" />
+            <NumericUpDown Grid.Row="0" Grid.Column="1"
+                           x:Name="TopNumeric"
+                           Minimum="0"
+                           Maximum="10000"
+                           Increment="1"
+                           FormatString="0"
+                           MinWidth="35"
+                           Height="16"
+                           FontSize="12"
+                           HorizontalAlignment="Stretch" />
+
+            <!-- Bottom -->
+            <TextBlock Grid.Row="1" Grid.Column="0"
+                       Text="Bottom:"
+                       FontSize="12"
+                       VerticalAlignment="Center"
+                       Foreground="#666666" />
+            <NumericUpDown Grid.Row="1" Grid.Column="1"
+                           x:Name="BottomNumeric"
+                           Minimum="0"
+                           Maximum="10000"
+                           Increment="1"
+                           FormatString="0"
+                           MinWidth="35"
+                           Height="16"
+                           FontSize="12"
+                           HorizontalAlignment="Stretch" />
+
+            <!-- Left -->
+            <TextBlock Grid.Row="2" Grid.Column="0"
+                       Text="Left:"
+                       FontSize="12"
+                       VerticalAlignment="Center"
+                       Foreground="#666666" />
+            <NumericUpDown Grid.Row="2" Grid.Column="1"
+                           x:Name="LeftNumeric"
+                           Minimum="0"
+                           Maximum="10000"
+                           Increment="1"
+                           FormatString="0"
+                           MinWidth="35"
+                           Height="16"
+                           FontSize="12"
+                           HorizontalAlignment="Stretch" />
+
+            <!-- Right -->
+            <TextBlock Grid.Row="3" Grid.Column="0"
+                       Text="Right:"
+                       FontSize="12"
+                       VerticalAlignment="Center"
+                       Foreground="#666666" />
+            <NumericUpDown Grid.Row="3" Grid.Column="1"
+                           x:Name="RightNumeric"
+                           Minimum="0"
+                           Maximum="10000"
+                           Increment="1"
+                           FormatString="0"
+                           MinWidth="35"
+                           Height="16"
+                           FontSize="12"
+                           HorizontalAlignment="Stretch" />
+        </Grid>
+    </StackPanel>
+</UserControl>

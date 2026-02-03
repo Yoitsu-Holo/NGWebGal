@@ -14,6 +14,7 @@ namespace NGWebGal.Layer.Controller;
 public abstract class ControllerSliderBase : LayerBase
 {
     protected SortedDictionary<int, SKBitmap> _image = [];
+    protected SortedDictionary<int, SKColor> _colors = []; // Store colors for each imageId
 
     protected IVector _mouseDelta = new(0, 0);
     protected new float _value = 0;
@@ -65,24 +66,25 @@ public abstract class ControllerSliderBase : LayerBase
         _image[(int)LayerStatus.Focused] = sliderPressed;
     }
 
-    public override void SetImage(SKBitmap image, int imageId = 0)
+    public override void SetImage(SKBitmap image, int imageId, IRect? imageWindow = null)
     {
-        _image[imageId] = image;
+        if (imageWindow != null && imageWindow != default(IRect))
+            _image[imageId] = image.SubBitmap(imageWindow);
+        else
+            _image[imageId] = image;
         _dirty = true;
     }
 
-    public override void SetImage(SKBitmap image, IRect imageWindow, int imageId = 0)
+    public override int[] GetImageIds()
     {
-        if (imageWindow == default)
-            SetImage(image, imageId);
-        else
-            _image[imageId] = image.SubBitmap(imageWindow);
-
-        _dirty = true;
+        return System.Linq.Enumerable.ToArray(_image.Keys);
     }
 
     public override void SetColor(SKColor color, int imageId = 0)
     {
+        // Store the color for GetColor retrieval
+        _colors[imageId] = color;
+
         // Use ThumbSize for thumb images (imageId >= 0), Size for track (imageId = -1)
         IVector bitmapSize = imageId == -1 ? Size : _thumbSize;
 
@@ -94,6 +96,22 @@ public abstract class ControllerSliderBase : LayerBase
         );
         canvas.Flush();
         _image[imageId] = bitmap;
+    }
+
+    public override SKColor GetColor(int imageId = 0)
+    {
+        if (_colors.TryGetValue(imageId, out SKColor color))
+            return color;
+
+        return SKColors.Transparent;
+    }
+
+    public override SKImage? GetImage(int imageId = 0)
+    {
+        if (_image.TryGetValue(imageId, out SKBitmap? bitmap) && bitmap != null && !bitmap.IsNull)
+            return SKImage.FromBitmap(bitmap);
+
+        return null;
     }
 
     public ControllerSliderBase()

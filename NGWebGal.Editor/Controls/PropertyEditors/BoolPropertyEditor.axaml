@@ -1,0 +1,9 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="NGWebGal.Editor.Controls.PropertyEditors.BoolPropertyEditor"
+             HorizontalAlignment="Stretch">
+    <CheckBox x:Name="ValueCheckBox"
+              FontSize="12"
+              Margin="1"
+              HorizontalAlignment="Stretch" />
+</UserControl>

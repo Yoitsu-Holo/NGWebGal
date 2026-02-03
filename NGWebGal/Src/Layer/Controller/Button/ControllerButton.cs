@@ -15,6 +15,7 @@ public class ControllerButton : LayerBase
 {
     protected List<SKBitmap> _imageBuffer = [];
     protected List<SKBitmap> _renderBuffer = [];
+    protected List<SKColor?> _colors = []; // Store colors for each state
 
     public ControllerButton()
     {
@@ -23,32 +24,41 @@ public class ControllerButton : LayerBase
         {
             _imageBuffer.Add(new());
             _renderBuffer.Add(new());
+            _colors.Add(null);
         }
     }
 
-    public override void SetImage(SKBitmap image, int imageId = 0)
+    public override void SetImage(SKBitmap image, int imageId, IRect? imageWindow = null)
     {
         if (imageId >= _imageBuffer.Count)
             return;
-        _imageBuffer[imageId] = image;
+        if (imageWindow != null && imageWindow != default(IRect))
+            _imageBuffer[imageId] = image.SubBitmap(imageWindow);
+        else
+            _imageBuffer[imageId] = image;
         _dirty = true;
     }
 
-    public override void SetImage(SKBitmap image, IRect imageWindow, int imageId = 0)
+    public override int[] GetImageIds()
     {
-        if (imageId >= _imageBuffer.Count)
-            return;
-        if (imageWindow == default)
-            SetImage(image, imageId);
-        else
-            _imageBuffer[imageId] = image.SubBitmap(imageWindow);
-        _dirty = true;
+        var ids = new List<int>();
+        for (int i = 0; i < _imageBuffer.Count; i++)
+        {
+            if (!_imageBuffer[i].IsNull())
+                ids.Add(i);
+        }
+        return ids.ToArray();
     }
 
     public override void SetColor(SKColor color, int imageId = 0)
     {
         if (imageId >= _imageBuffer.Count)
             return;
+
+        // Store the color for GetColor retrieval
+        if (imageId < _colors.Count)
+            _colors[imageId] = color;
+
         SKBitmap bitmap = new(Size.X, Size.Y, RenderConfig.DefaultColorType, RenderConfig.DefaultAlphaType);
         using SKCanvas canvas = new(bitmap);
         canvas.DrawRect(
@@ -58,6 +68,22 @@ public class ControllerButton : LayerBase
         canvas.Flush();
         _imageBuffer[imageId] = bitmap;
         _dirty = true;
+    }
+
+    public override SKColor GetColor(int imageId = 0)
+    {
+        if (imageId >= 0 && imageId < _colors.Count && _colors[imageId].HasValue)
+            return _colors[imageId]!.Value;
+
+        return SKColors.Transparent;
+    }
+
+    public override SKImage? GetImage(int imageId = 0)
+    {
+        if (imageId < 0 || imageId >= _renderBuffer.Count || _renderBuffer[imageId].IsNull)
+            return null;
+
+        return SKImage.FromBitmap(_renderBuffer[imageId]);
     }
 
     public override bool DoAction(EventArgs eventArgs)
