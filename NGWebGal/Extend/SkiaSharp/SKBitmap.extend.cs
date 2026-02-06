@@ -1,23 +1,53 @@
 using SkiaSharp;
 
-namespace WebGal.Extend;
+namespace NGWebGal.Extend.SkiaSharp;
 
-public static class SKBitmapExtend
+public static class SKBitmapExtensions
 {
-	public static SKBitmap SubBitmap(this SKBitmap source, SKRectI subRect)
+	/// <summary>
+	/// Extracts a sub-rectangle from a bitmap
+	/// </summary>
+	/// <param name="source">Source bitmap to extract from</param>
+	/// <param name="subRect">Rectangle to extract</param>
+	/// <param name="quality">Filter quality for the drawing operation (default: Medium)</param>
+	public static SKBitmap SubBitmap(this SKBitmap source, SKRectI subRect, SKFilterQuality quality = SKFilterQuality.Medium)
 	{
 		if (subRect.Width == 0 || subRect.Height == 0)
 			subRect = new(0, 0, source.Width, source.Height);
-		// 创建一个新的 SKBitmap 对象用于存储裁剪后的图片
+
+		// Create a new SKBitmap for the cropped image
 		var croppedBitmap = new SKBitmap(subRect.Width, subRect.Height);
 
-		// 创建一个 SKCanvas 对象，并将其绑定到 croppedBitmap 上
+		// Create a canvas and bind it to the cropped bitmap
 		using (var canvas = new SKCanvas(croppedBitmap))
 		{
-			// 绘制裁剪后的图片
-			canvas.DrawBitmap(source, subRect, new SKRect(0, 0, subRect.Width, subRect.Height));
+			// Use specified quality for drawing
+			using var paint = new SKPaint { FilterQuality = quality };
+			canvas.DrawBitmap(source, subRect, new SKRect(0, 0, subRect.Width, subRect.Height), paint);
 		}
-		// 返回裁剪后的 SKBitmap 图片
+
 		return croppedBitmap;
+	}
+
+	/// <summary>
+	/// Checks if a bitmap is null or has zero dimensions
+	/// </summary>
+	public static bool IsNull(this SKBitmap? bitmap)
+	{
+		return bitmap == null || bitmap.Width == 0 || bitmap.Height == 0;
+	}
+
+	/// <summary>
+	/// Resizes a bitmap to the specified dimensions
+	/// </summary>
+	public static SKBitmap Resize(this SKBitmap source, NGWebGal.Types.IVector size, SKFilterQuality quality = SKFilterQuality.Medium)
+	{
+		var resized = new SKBitmap(size.X, size.Y);
+		using (var canvas = new SKCanvas(resized))
+		{
+			var paint = new SKPaint { FilterQuality = quality };
+			canvas.DrawBitmap(source, new SKRect(0, 0, size.X, size.Y), paint);
+		}
+		return resized;
 	}
 }

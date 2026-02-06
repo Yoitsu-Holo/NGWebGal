@@ -7,7 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using NGWebGal.Extensions;
+using NGWebGal.Extend.SkiaSharp;
 using SkiaSharp;
 
 namespace NGWebGal.Editor.Controls.PropertyEditors;

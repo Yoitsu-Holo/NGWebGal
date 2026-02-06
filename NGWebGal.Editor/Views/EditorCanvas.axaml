@@ -3,6 +3,6 @@
         xmlns:views="using:NGWebGal.Editor.Views">
     <!-- EditorCanvas styles - control is entirely code-based for custom rendering -->
     <Style Selector="views|EditorCanvas">
-        <Setter Property="ClipToBounds" Value="False"/>
+        <Setter Property="ClipToBounds" Value="True"/>
     </Style>
 </Styles>

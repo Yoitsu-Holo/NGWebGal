@@ -5,7 +5,7 @@
     <StackPanel Spacing="2" HorizontalAlignment="Stretch">
         <TextBlock x:Name="LabelTextBlock"
                    FontWeight="SemiBold"
-                   FontSize="12"
+                   FontSize="11"
                    Foreground="#555555"
                    Margin="0,0,0,2" />
 
@@ -15,7 +15,7 @@
             <!-- Top -->
             <TextBlock Grid.Row="0" Grid.Column="0"
                        Text="Top:"
-                       FontSize="12"
+                       FontSize="10"
                        VerticalAlignment="Center"
                        Foreground="#666666" />
             <NumericUpDown Grid.Row="0" Grid.Column="1"
@@ -24,15 +24,15 @@
                            Maximum="10000"
                            Increment="1"
                            FormatString="0"
-                           MinWidth="35"
-                           Height="16"
-                           FontSize="12"
+                           MinWidth="50"
+                           Height="22"
+                           FontSize="11"
                            HorizontalAlignment="Stretch" />
 
             <!-- Bottom -->
             <TextBlock Grid.Row="1" Grid.Column="0"
                        Text="Bottom:"
-                       FontSize="12"
+                       FontSize="10"
                        VerticalAlignment="Center"
                        Foreground="#666666" />
             <NumericUpDown Grid.Row="1" Grid.Column="1"
@@ -41,15 +41,15 @@
                            Maximum="10000"
                            Increment="1"
                            FormatString="0"
-                           MinWidth="35"
-                           Height="16"
-                           FontSize="12"
+                           MinWidth="50"
+                           Height="22"
+                           FontSize="11"
                            HorizontalAlignment="Stretch" />
 
             <!-- Left -->
             <TextBlock Grid.Row="2" Grid.Column="0"
                        Text="Left:"
-                       FontSize="12"
+                       FontSize="10"
                        VerticalAlignment="Center"
                        Foreground="#666666" />
             <NumericUpDown Grid.Row="2" Grid.Column="1"
@@ -58,15 +58,15 @@
                            Maximum="10000"
                            Increment="1"
                            FormatString="0"
-                           MinWidth="35"
-                           Height="16"
-                           FontSize="12"
+                           MinWidth="50"
+                           Height="22"
+                           FontSize="11"
                            HorizontalAlignment="Stretch" />
 
             <!-- Right -->
             <TextBlock Grid.Row="3" Grid.Column="0"
                        Text="Right:"
-                       FontSize="12"
+                       FontSize="10"
                        VerticalAlignment="Center"
                        Foreground="#666666" />
             <NumericUpDown Grid.Row="3" Grid.Column="1"
@@ -75,9 +75,9 @@
                            Maximum="10000"
                            Increment="1"
                            FormatString="0"
-                           MinWidth="35"
-                           Height="16"
-                           FontSize="12"
+                           MinWidth="50"
+                           Height="22"
+                           FontSize="11"
                            HorizontalAlignment="Stretch" />
         </Grid>
     </StackPanel>

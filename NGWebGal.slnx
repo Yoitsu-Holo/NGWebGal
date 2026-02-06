@@ -1,4 +1,7 @@
 <Solution>
   <Project Path="NGWebGal/NGWebGal.csproj" />
+  <Project Path="NGWebGal.Tests/NGWebGal.Tests.csproj" />
+  <Project Path="NGWebGal.Benchmarks/NGWebGal.Benchmarks.csproj" />
   <Project Path="NGWebGal.Editor/NGWebGal.Editor.csproj" />
+  <Project Path="NGWebGal.Editor.Tests/NGWebGal.Editor.Tests.csproj" />
 </Solution>

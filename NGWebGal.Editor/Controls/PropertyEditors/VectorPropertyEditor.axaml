@@ -9,16 +9,16 @@
         <TextBlock Grid.Column="0"
                    x:Name="PropertyNameLabel"
                    FontWeight="Medium"
-                   FontSize="12"
+                   FontSize="11"
                    VerticalAlignment="Center"
-                   Margin="0,0,4,0" />
-        <TextBlock Grid.Column="1" Text="X:" VerticalAlignment="Center" Margin="0,0,2,0" FontSize="12" />
+                   Margin="0,0,6,0" />
+        <TextBlock Grid.Column="1" Text="X:" VerticalAlignment="Center" Margin="0,0,2,0" FontSize="10" />
         <NumericUpDown Grid.Column="2"
                        Name="XNumeric"
-                       Margin="0,0,4,0"
-                       MinWidth="35"
-                       Height="16"
-                       FontSize="12"
+                       Margin="0,0,6,0"
+                       MinWidth="50"
+                       Height="22"
+                       FontSize="11"
                        Increment="1"
                        FormatString="F2"
                        AllowSpin="True"
@@ -26,12 +26,12 @@
                        ButtonSpinnerLocation="Right"
                        HorizontalAlignment="Stretch" />
 
-        <TextBlock Grid.Column="3" Text="Y:" VerticalAlignment="Center" Margin="0,0,2,0" FontSize="12" />
+        <TextBlock Grid.Column="3" Text="Y:" VerticalAlignment="Center" Margin="0,0,2,0" FontSize="10" />
         <NumericUpDown Grid.Column="4"
                        Name="YNumeric"
-                       MinWidth="35"
-                       Height="16"
-                       FontSize="12"
+                       MinWidth="50"
+                       Height="22"
+                       FontSize="11"
                        Increment="1"
                        FormatString="F2"
                        AllowSpin="True"

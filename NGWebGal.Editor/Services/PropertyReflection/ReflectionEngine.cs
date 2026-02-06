@@ -110,6 +110,164 @@ public class ReflectionEngine
     }
 
     /// <summary>
+    /// Discovers properties from a WidgetViewModel, prioritizing ViewModel properties over CoreLayer properties.
+    /// </summary>
+    /// <param name="viewModel">The WidgetViewModel instance</param>
+    /// <returns>Array of property descriptors with ViewModel properties taking precedence</returns>
+    public PropertyDescriptor[] DiscoverViewModelProperties(object viewModel)
+    {
+        if (viewModel == null)
+            throw new ArgumentNullException(nameof(viewModel));
+
+        var vmType = viewModel.GetType();
+        var properties = new List<PropertyDescriptor>();
+
+        // First, discover ViewModel-level properties (Position, Size, Offset)
+        // These are the authoritative source and should appear first
+        var vmProperties = new[] { "Position", "Size", "Offset" };
+
+        foreach (var propName in vmProperties)
+        {
+            var prop = vmType.GetProperty(propName, BindingFlags.Public | BindingFlags.Instance);
+            if (prop != null && !TypeFilters.IsExcludedType(prop.PropertyType))
+            {
+                var descriptor = CreateViewModelPropertyDescriptor(
+                    prop,
+                    vmType,
+                    0, // ViewModel properties at hierarchy depth 0 (highest priority)
+                    propName,
+                    new HashSet<Type>());
+
+                if (descriptor != null)
+                    properties.Add(descriptor);
+            }
+        }
+
+        // Then discover CoreLayer properties (excluding Position, Size which ViewModel provides)
+        var coreLayerProp = vmType.GetProperty("CoreLayer", BindingFlags.Public | BindingFlags.Instance);
+        if (coreLayerProp != null)
+        {
+            var coreLayer = coreLayerProp.GetValue(viewModel) as ILayer;
+            if (coreLayer != null)
+            {
+                var layerProperties = DiscoverProperties(coreLayer.GetType());
+
+                // Filter out properties already provided by ViewModel
+                var filteredProperties = layerProperties
+                    .Where(p => !vmProperties.Contains(p.Name))
+                    .Select(p => CreateLayerPropertyViaViewModel(p, viewModel))
+                    .Where(p => p != null)
+                    .ToList();
+
+                properties.AddRange(filteredProperties!);
+            }
+        }
+
+        return properties.ToArray();
+    }
+
+    /// <summary>
+    /// Creates a PropertyDescriptor for a WidgetViewModel property.
+    /// Similar to CreatePropertyDescriptor but targets ViewModel instead of ILayer.
+    /// </summary>
+    private PropertyDescriptor? CreateViewModelPropertyDescriptor(
+        PropertyInfo prop,
+        Type declaringType,
+        int hierarchyDepth,
+        string propertyPath,
+        HashSet<Type> visitedTypes)
+    {
+        if (visitedTypes.Contains(prop.PropertyType))
+            return null;
+
+        visitedTypes.Add(prop.PropertyType);
+
+        bool isExpandable = ShouldExpand(prop.PropertyType);
+        var category = CategorizeProperty(prop.Name);
+        var getter = CompileGetter(prop);
+        var setter = prop.CanWrite ? CompileSetter(prop) : null;
+
+        return new PropertyDescriptor
+        {
+            Name = prop.Name,
+            PropertyPath = propertyPath,
+            PropertyType = prop.PropertyType,
+            DeclaringType = declaringType,
+            HierarchyDepth = hierarchyDepth,
+            IsReadOnly = !prop.CanWrite,
+            IsExpandable = isExpandable,
+            Category = category,
+            Getter = getter,
+            Setter = setter
+        };
+    }
+
+    /// <summary>
+    /// Creates a PropertyDescriptor that accesses CoreLayer properties via ViewModel.
+    /// Wraps the original descriptor to access via ViewModel.CoreLayer.
+    /// </summary>
+    private PropertyDescriptor? CreateLayerPropertyViaViewModel(PropertyDescriptor layerDescriptor, object viewModel)
+    {
+        var vmType = viewModel.GetType();
+        var coreLayerProp = vmType.GetProperty("CoreLayer");
+        if (coreLayerProp == null)
+            return null;
+
+        // Create wrapped getter: vm => layerDescriptor.Getter(vm.CoreLayer)
+        Func<object, object?> wrappedGetter = (vm) =>
+        {
+            try
+            {
+                var coreLayer = coreLayerProp.GetValue(vm);
+                if (coreLayer == null)
+                    return null;
+                return layerDescriptor.Getter(coreLayer);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting {layerDescriptor.Name} via ViewModel: {ex.Message}");
+                return null;
+            }
+        };
+
+        // Create wrapped setter: (vm, value) => layerDescriptor.Setter(vm.CoreLayer, value)
+        Action<object, object?>? wrappedSetter = null;
+        if (layerDescriptor.Setter != null)
+        {
+            wrappedSetter = (vm, value) =>
+            {
+                try
+                {
+                    var coreLayer = coreLayerProp.GetValue(vm);
+                    if (coreLayer != null)
+                    {
+                        layerDescriptor.Setter(coreLayer, value);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error setting {layerDescriptor.Name} via ViewModel: {ex.Message}");
+                }
+            };
+        }
+
+        // Return new descriptor that targets ViewModel but accesses CoreLayer
+        return new PropertyDescriptor
+        {
+            Name = layerDescriptor.Name,
+            PropertyPath = layerDescriptor.PropertyPath,
+            PropertyType = layerDescriptor.PropertyType,
+            DeclaringType = vmType, // Important: DeclaringType is now ViewModel
+            HierarchyDepth = layerDescriptor.HierarchyDepth + 1, // Increment depth (lower priority)
+            IsReadOnly = layerDescriptor.IsReadOnly,
+            IsExpandable = layerDescriptor.IsExpandable,
+            Category = layerDescriptor.Category,
+            Getter = wrappedGetter,
+            Setter = wrappedSetter
+        };
+    }
+
+    /// <summary>
     /// Creates a PropertyDescriptor with compiled getter/setter delegates
     /// </summary>
     private PropertyDescriptor? CreatePropertyDescriptor(

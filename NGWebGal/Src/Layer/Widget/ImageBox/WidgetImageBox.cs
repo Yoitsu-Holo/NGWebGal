@@ -1,6 +1,6 @@
 using System;
 using SkiaSharp;
-using NGWebGal.Extensions;
+using NGWebGal.Extend.SkiaSharp;
 using NGWebGal.Types;
 
 namespace NGWebGal.Layer.Widget;

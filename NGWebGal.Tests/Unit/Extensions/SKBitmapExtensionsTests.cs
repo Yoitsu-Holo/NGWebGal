@@ -1,5 +1,5 @@
 using SkiaSharp;
-using NGWebGal.Extensions;
+using NGWebGal.Extend.SkiaSharp;
 using Xunit;
 
 namespace NGWebGal.Tests.Unit.Extensions;

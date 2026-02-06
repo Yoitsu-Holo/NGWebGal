@@ -2,7 +2,7 @@ using SkiaSharp;
 using NGWebGal.Layer;
 using NGWebGal.Layer.Widget;
 using NGWebGal.Types;
-using NGWebGal.Extensions;
+using NGWebGal.Extend.SkiaSharp;
 using Xunit;
 
 namespace NGWebGal.Tests.Unit.Layer.Widget;
@@ -25,7 +25,7 @@ public class WidgetImageBoxTests
 		using var testImage = CreateTestBitmap(100, 100, SKColors.Red);
 
 		// Act
-		imageBox.SetImage(testImage);
+		imageBox.SetImage(testImage, 0);
 
 		// Assert
 		Assert.True(imageBox.GetType().GetField("_dirty",
@@ -42,7 +42,7 @@ public class WidgetImageBoxTests
 		var subRect = new IRect(50, 50, 100, 100);
 
 		// Act
-		imageBox.SetImage(testImage, subRect);
+		imageBox.SetImage(testImage, 0, subRect);
 
 		// Assert - verify the image buffer was updated
 		var imageBuffer = imageBox.GetType().GetField("_imageBuffer",
@@ -83,7 +83,7 @@ public class WidgetImageBoxTests
 		};
 
 		using var testImage = CreateTestBitmap(100, 100, SKColors.Red);
-		imageBox.SetImage(testImage);
+		imageBox.SetImage(testImage, 0);
 		imageBox.ResetAnimationData();
 
 		using var surface = SKSurface.Create(new SKImageInfo(200, 200));

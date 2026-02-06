@@ -1,6 +1,8 @@
 using System;
+using System.ComponentModel;
 using Avalonia.Controls;
-using NGWebGal.Editor.Services.PropertyReflection;
+using Avalonia.Threading;
+using PropertyDescriptor = NGWebGal.Editor.Services.PropertyReflection.PropertyDescriptor;
 
 namespace NGWebGal.Editor.Controls.PropertyEditors;
 
@@ -13,6 +15,10 @@ public partial class NumericPropertyEditor<T> : UserControl, IPropertyEditor whe
     private object? _target;
     private readonly TextBlock _labelTextBlock;
     private readonly NumericUpDown _valueNumericUpDown;
+    private DispatcherTimer? _updateThrottle;
+    private bool _hasPendingUpdate;
+    private INotifyPropertyChanged? _observableTarget;
+    private bool _isUpdating;
 
     public PropertyDescriptor Descriptor { get; }
     public Control Control => this;
@@ -22,6 +28,21 @@ public partial class NumericPropertyEditor<T> : UserControl, IPropertyEditor whe
     public NumericPropertyEditor(PropertyDescriptor descriptor)
     {
         Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
+
+        // Initialize throttle timer
+        _updateThrottle = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(100)
+        };
+        _updateThrottle.Tick += (_, _) =>
+        {
+            _updateThrottle.Stop();
+            if (_hasPendingUpdate)
+            {
+                _hasPendingUpdate = false;
+                ApplyPendingUpdate();
+            }
+        };
 
         // Create controls manually (Avalonia code generator doesn't support generic types)
         var grid = new Grid
@@ -33,21 +54,21 @@ public partial class NumericPropertyEditor<T> : UserControl, IPropertyEditor whe
         _labelTextBlock = new TextBlock
         {
             FontWeight = Avalonia.Media.FontWeight.SemiBold,
-            FontSize = 12,
+            FontSize = 11,
             Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromRgb(0x55, 0x55, 0x55)),
             Text = descriptor.Name + ":",
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            Margin = new Avalonia.Thickness(0, 0, 4, 0)
+            Margin = new Avalonia.Thickness(0, 0, 6, 0)
         };
         Grid.SetColumn(_labelTextBlock, 0);
 
         _valueNumericUpDown = new NumericUpDown
         {
-            FontSize = 12,
+            FontSize = 11,
             Minimum = 0,
             Maximum = 10000,
-            MinWidth = 42,
-            Height = 16,
+            MinWidth = 60,
+            Height = 22,
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
             ShowButtonSpinner = true,
             ButtonSpinnerLocation = Avalonia.Controls.Location.Right,
@@ -88,19 +109,58 @@ public partial class NumericPropertyEditor<T> : UserControl, IPropertyEditor whe
     {
         _target = target ?? throw new ArgumentNullException(nameof(target));
 
-        // Load current value
-        var currentValue = Descriptor.Getter(_target);
-        if (currentValue != null)
+        // Subscribe to PropertyChanged if target is observable
+        if (target is INotifyPropertyChanged observable)
         {
-            decimal decimalValue = Convert.ToDecimal(currentValue);
-            _valueNumericUpDown.Value = decimalValue;
+            _observableTarget = observable;
+            _observableTarget.PropertyChanged += OnTargetPropertyChanged;
+        }
+
+        // Load current value
+        UpdateFromTarget();
+    }
+
+    private void UpdateFromTarget()
+    {
+        if (_target == null || _isUpdating)
+            return;
+
+        _isUpdating = true;
+        try
+        {
+            var currentValue = Descriptor.Getter(_target);
+            if (currentValue != null)
+            {
+                decimal decimalValue = Convert.ToDecimal(currentValue);
+                _valueNumericUpDown.Value = decimalValue;
+            }
+        }
+        finally
+        {
+            _isUpdating = false;
         }
     }
 
     public void Unbind()
     {
+        if (_observableTarget != null)
+        {
+            _observableTarget.PropertyChanged -= OnTargetPropertyChanged;
+            _observableTarget = null;
+        }
+
+        _updateThrottle?.Stop();
         _target = null;
         _valueNumericUpDown.Value = 0;
+    }
+
+    private void OnTargetPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Only update if the changed property matches our descriptor
+        if (e.PropertyName == Descriptor.Name)
+        {
+            UpdateFromTarget();
+        }
     }
 
     private void OnNumericUpDownPropertyChanged(object? sender, Avalonia.AvaloniaPropertyChangedEventArgs e)
@@ -109,41 +169,62 @@ public partial class NumericPropertyEditor<T> : UserControl, IPropertyEditor whe
         if (e.Property.Name != nameof(_valueNumericUpDown.Value))
             return;
 
-        if (_target == null || Descriptor.Setter == null)
+        if (_target == null || Descriptor.Setter == null || _isUpdating)
             return;
 
         if (_valueNumericUpDown.Value == null)
             return;
 
-        // Convert decimal back to T
-        decimal decimalValue = _valueNumericUpDown.Value.Value;
-        T typedValue;
+        _hasPendingUpdate = true;
+        _updateThrottle?.Stop();
+        _updateThrottle?.Start();
+    }
 
-        if (typeof(T) == typeof(int))
+    private void ApplyPendingUpdate()
+    {
+        if (_target == null || Descriptor.Setter == null || _isUpdating)
+            return;
+
+        if (_valueNumericUpDown.Value == null)
+            return;
+
+        _isUpdating = true;
+        try
         {
-            typedValue = (T)(object)(int)decimalValue;
+            // Convert decimal back to T
+            decimal decimalValue = _valueNumericUpDown.Value.Value;
+            T typedValue;
+
+            if (typeof(T) == typeof(int))
+            {
+                typedValue = (T)(object)(int)decimalValue;
+            }
+            else if (typeof(T) == typeof(float))
+            {
+                typedValue = (T)(object)(float)decimalValue;
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                typedValue = (T)(object)(double)decimalValue;
+            }
+            else
+            {
+                throw new NotSupportedException($"Type {typeof(T).Name} not supported");
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[NumericPropertyEditor] Setting {Descriptor.Name} = {typedValue}");
+
+            // Update target object
+            Descriptor.Setter(_target, typedValue);
+
+            System.Diagnostics.Debug.WriteLine($"[NumericPropertyEditor] Setter called successfully");
+
+            // Raise ValueChanged event
+            ValueChanged?.Invoke(this, EventArgs.Empty);
         }
-        else if (typeof(T) == typeof(float))
+        finally
         {
-            typedValue = (T)(object)(float)decimalValue;
+            _isUpdating = false;
         }
-        else if (typeof(T) == typeof(double))
-        {
-            typedValue = (T)(object)(double)decimalValue;
-        }
-        else
-        {
-            throw new NotSupportedException($"Type {typeof(T).Name} not supported");
-        }
-
-        System.Diagnostics.Debug.WriteLine($"[NumericPropertyEditor] Setting {Descriptor.Name} = {typedValue}");
-
-        // Update target object
-        Descriptor.Setter(_target, typedValue);
-
-        System.Diagnostics.Debug.WriteLine($"[NumericPropertyEditor] Setter called successfully");
-
-        // Raise ValueChanged event
-        ValueChanged?.Invoke(this, EventArgs.Empty);
     }
 }

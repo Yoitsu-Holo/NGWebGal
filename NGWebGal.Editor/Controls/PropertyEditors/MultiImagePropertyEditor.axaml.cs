@@ -9,7 +9,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using NGWebGal.Editor.Models;
 using NGWebGal.Editor.Services.PropertyReflection;
-using NGWebGal.Extensions;
+using NGWebGal.Extend.SkiaSharp;
 using NGWebGal.Layer;
 using SkiaSharp;
 
@@ -63,11 +63,32 @@ public partial class MultiImagePropertyEditor : UserControl, IPropertyEditor
 
     public void Bind(object target)
     {
-        if (target is not ILayer layer)
-            throw new ArgumentException("Target must be an ILayer", nameof(target));
+        // Support both ILayer (legacy) and WidgetViewModel (new)
+        ILayer? layer = null;
+        EditorWidget? widget = null;
+
+        if (target is ILayer layerTarget)
+        {
+            // Legacy path: direct ILayer binding
+            layer = layerTarget;
+            widget = _widgetLookup?.Invoke(layerTarget);
+        }
+        else if (target is ViewModels.WidgetViewModel viewModel)
+        {
+            // New path: WidgetViewModel binding
+            layer = viewModel.CoreLayer;
+            widget = viewModel.ToModel();
+        }
+        else
+        {
+            throw new ArgumentException("Target must be an ILayer or WidgetViewModel", nameof(target));
+        }
+
+        if (layer == null)
+            throw new ArgumentException("Target has no CoreLayer", nameof(target));
 
         _layer = layer;
-        _widget = _widgetLookup?.Invoke(layer);
+        _widget = widget;
 
         RefreshImageIdList();
         UpdateDisplay();

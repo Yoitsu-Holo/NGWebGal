@@ -27,8 +27,8 @@ public class PropertyEditorFactory
     /// Creates an appropriate editor for the given property descriptor
     /// </summary>
     /// <param name="descriptor">The property descriptor</param>
-    /// <returns>A property editor instance</returns>
-    public IPropertyEditor CreateEditor(PropertyDescriptor descriptor)
+    /// <returns>A property editor instance, or null if no suitable editor is available</returns>
+    public IPropertyEditor? CreateEditor(PropertyDescriptor descriptor)
     {
         if (descriptor == null)
             throw new ArgumentNullException(nameof(descriptor));
@@ -99,6 +99,8 @@ public class PropertyEditorFactory
             return new ExpandablePropertyEditor(descriptor);
         }
 
-        throw new NotSupportedException($"No editor available for property type: {propertyType.Name}");
+        // Return null for unsupported types instead of throwing
+        System.Diagnostics.Debug.WriteLine($"[PropertyEditorFactory] No editor available for property type: {propertyType.Name}");
+        return null;
     }
 }

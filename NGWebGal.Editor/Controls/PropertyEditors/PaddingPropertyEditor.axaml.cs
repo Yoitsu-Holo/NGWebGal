@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using Avalonia.Controls;
 using NGWebGal.Editor.Services.PropertyReflection;
 using NGWebGal.Types;
@@ -12,13 +13,14 @@ public partial class PaddingPropertyEditor : UserControl, IPropertyEditor
 {
     private object? _target;
     private bool _isUpdating = false;
+    private INotifyPropertyChanged? _observableTarget;
 
-    public PropertyDescriptor Descriptor { get; }
+    public Services.PropertyReflection.PropertyDescriptor Descriptor { get; }
     public Control Control => this;
 
     public event EventHandler? ValueChanged;
 
-    public PaddingPropertyEditor(PropertyDescriptor descriptor)
+    public PaddingPropertyEditor(Services.PropertyReflection.PropertyDescriptor descriptor)
     {
         Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
 
@@ -60,6 +62,12 @@ public partial class PaddingPropertyEditor : UserControl, IPropertyEditor
     {
         _target = target ?? throw new ArgumentNullException(nameof(target));
 
+        if (target is INotifyPropertyChanged observable)
+        {
+            _observableTarget = observable;
+            _observableTarget.PropertyChanged += OnTargetPropertyChanged;
+        }
+
         // Load current value
         _isUpdating = true;
         try
@@ -81,6 +89,11 @@ public partial class PaddingPropertyEditor : UserControl, IPropertyEditor
 
     public void Unbind()
     {
+        if (_observableTarget != null)
+        {
+            _observableTarget.PropertyChanged -= OnTargetPropertyChanged;
+            _observableTarget = null;
+        }
         _target = null;
         _isUpdating = true;
         try
@@ -93,6 +106,29 @@ public partial class PaddingPropertyEditor : UserControl, IPropertyEditor
         finally
         {
             _isUpdating = false;
+        }
+    }
+
+    private void OnTargetPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == Descriptor.Name)
+        {
+            _isUpdating = true;
+            try
+            {
+                var currentValue = Descriptor.Getter(_target!);
+                if (currentValue is TextPadding padding)
+                {
+                    TopNumeric.Value = padding.Top;
+                    BottomNumeric.Value = padding.Bottom;
+                    LeftNumeric.Value = padding.Left;
+                    RightNumeric.Value = padding.Right;
+                }
+            }
+            finally
+            {
+                _isUpdating = false;
+            }
         }
     }
 

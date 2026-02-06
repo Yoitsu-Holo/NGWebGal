@@ -6,7 +6,7 @@
              x:Class="NGWebGal.Editor.Controls.PropertyEditors.ImagePropertyEditor"
              HorizontalAlignment="Stretch">
     <StackPanel Orientation="Vertical" Spacing="2" HorizontalAlignment="Stretch">
-        <TextBlock x:Name="PropertyNameLabel" FontWeight="Medium" FontSize="12" />
+        <TextBlock x:Name="PropertyNameLabel" FontWeight="Medium" FontSize="11" />
 
         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
             <!-- Thumbnail with checkerboard background -->
@@ -26,7 +26,7 @@
             <!-- File path display -->
             <TextBlock Grid.Column="1"
                        Name="FilePathText"
-                       FontSize="12"
+                       FontSize="11"
                        VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis"
                        Margin="0,0,4,0" />
@@ -35,9 +35,9 @@
             <Button Grid.Column="2"
                     Name="BrowseButton"
                     Content="Browse..."
-                    FontSize="12"
-                    Height="16"
-                    Padding="4,2"
+                    FontSize="11"
+                    MinHeight="24"
+                    Padding="6,3"
                     HorizontalAlignment="Stretch"
                     Margin="0,0,2,0" />
 
@@ -45,9 +45,9 @@
             <Button Grid.Column="3"
                     Name="ClearButton"
                     Content="Clear"
-                    FontSize="12"
-                    Height="16"
-                    Padding="4,2"
+                    FontSize="11"
+                    MinHeight="24"
+                    Padding="6,3"
                     HorizontalAlignment="Stretch" />
         </Grid>
     </StackPanel>

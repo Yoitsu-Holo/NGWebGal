@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -56,6 +57,42 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private bool _isDirty;
+
+    /// <summary>
+    /// Gets or sets the canvas width in pixels.
+    /// </summary>
+    [ObservableProperty]
+    private int _canvasWidth = 1280;
+
+    /// <summary>
+    /// Gets or sets the canvas height in pixels.
+    /// </summary>
+    [ObservableProperty]
+    private int _canvasHeight = 720;
+
+    /// <summary>
+    /// Gets or sets the canvas zoom level (0.1 to 5.0).
+    /// </summary>
+    [ObservableProperty]
+    private double _zoomLevel = 1.0;
+
+    /// <summary>
+    /// Gets or sets whether to show percentage guide lines.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showPercentageLines = true;
+
+    /// <summary>
+    /// Gets or sets whether to show grid lines.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showGridLines = false;
+
+    /// <summary>
+    /// Gets or sets the grid spacing in pixels.
+    /// </summary>
+    [ObservableProperty]
+    private int _gridSpacing = 50;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainViewModel"/> class.
@@ -296,6 +333,71 @@ public partial class MainViewModel : ObservableObject
         var viewModel = new WidgetViewModel(widget, this);
         viewModel.CoreLayer = _coreFactory.CreateLayer(widget);
 
+        // CRITICAL: Sync Position/Size to CoreLayer immediately after creation
+        if (viewModel.CoreLayer != null)
+        {
+            viewModel.CoreLayer.Position = new NGWebGal.Types.IVector(viewModel.X, viewModel.Y);
+            viewModel.CoreLayer.Size = new NGWebGal.Types.IVector(viewModel.Width, viewModel.Height);
+        }
+
+        // Set default color/placeholder based on widget type
+        if (viewModel.CoreLayer != null)
+        {
+            try
+            {
+                // Only set color for widgets that support SetColor
+                if (type == WidgetType.ColorBox ||
+                    type == WidgetType.TextBox ||
+                    type == WidgetType.ProgressBar)
+                {
+                    // Use the SAME colors as defined in WidgetTypeToBrushConverter
+                    var defaultColor = type switch
+                    {
+                        WidgetType.ColorBox => new SkiaSharp.SKColor(240, 128, 128),       // LightCoral
+                        WidgetType.TextBox => new SkiaSharp.SKColor(144, 238, 144),        // LightGreen
+                        WidgetType.ProgressBar => new SkiaSharp.SKColor(250, 250, 210),    // LightGoldenrodYellow
+                        _ => new SkiaSharp.SKColor(200, 200, 200)                          // Default gray
+                    };
+
+                    viewModel.CoreLayer.SetColor(defaultColor, 0);
+                    widget.Color = EditorColor.FromSKColor(defaultColor);
+                    System.Diagnostics.Debug.WriteLine($"[MainViewModel] Set default color for {type}: {defaultColor}");
+                }
+                else if (type == WidgetType.ImageBox)
+                {
+                    // For ImageBox, create a placeholder bitmap with LightBlue color
+                    // Use the SAME color as defined in WidgetTypeToBrushConverter
+                    var placeholderColor = new SkiaSharp.SKColor(173, 216, 230); // LightBlue
+                    var bitmap = new SkiaSharp.SKBitmap(100, 100);
+
+                    try
+                    {
+                        var canvas = new SkiaSharp.SKCanvas(bitmap);
+                        canvas.Clear(placeholderColor); // Fill entire bitmap with LightBlue
+                        canvas.Dispose();
+
+                        // Pass ownership of bitmap to CoreLayer (it will manage disposal)
+                        viewModel.CoreLayer.SetImage(bitmap, 0);
+                        System.Diagnostics.Debug.WriteLine($"[MainViewModel] Set placeholder image for ImageBox (100x100, color: {placeholderColor})");
+                    }
+                    catch
+                    {
+                        // If SetImage fails, dispose the bitmap ourselves
+                        bitmap.Dispose();
+                        throw;
+                    }
+                }
+                // For other widgets (Button, Toggle, Checkbox, Sliders), use default rendering
+
+                viewModel.InvalidateBitmap();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Failed to set default appearance: {ex.Message}");
+                // Continue anyway - widget will just use default rendering
+            }
+        }
+
         Widgets.Add(viewModel);
 
         SelectedWidget = viewModel;
@@ -341,7 +443,31 @@ public partial class MainViewModel : ObservableObject
         // Notify that DeleteWidget command can execute state may have changed
         DeleteWidgetCommand.NotifyCanExecuteChanged();
 
-        // Update PropertyPanelVM with the selected widget's CoreLayer
-        PropertyPanelVM.LoadLayer(value?.CoreLayer);
+        // Update PropertyPanelVM with the selected widget (enables ViewModel property binding)
+        PropertyPanelVM.LoadWidget(value);
+    }
+
+    /// <summary>
+    /// Shows the canvas settings dialog.
+    /// </summary>
+    [RelayCommand]
+    private async Task ShowCanvasSettings()
+    {
+        var dialog = new Views.CanvasSettingsDialog(CanvasWidth, CanvasHeight);
+
+        // Get the main window from the application lifetime
+        var mainWindow = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+        if (mainWindow == null)
+            return;
+
+        // Show dialog and get result
+        var result = await dialog.ShowDialog<bool>(mainWindow);
+
+        if (result)
+        {
+            // User clicked OK, update canvas size
+            CanvasWidth = (int)dialog.CanvasWidth;
+            CanvasHeight = (int)dialog.CanvasHeight;
+        }
     }
 }

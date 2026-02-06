@@ -1,6 +1,7 @@
 using System;
+using System.ComponentModel;
 using Avalonia.Controls;
-using NGWebGal.Editor.Services.PropertyReflection;
+using PropertyDescriptor = NGWebGal.Editor.Services.PropertyReflection.PropertyDescriptor;
 
 namespace NGWebGal.Editor.Controls.PropertyEditors;
 
@@ -10,6 +11,8 @@ namespace NGWebGal.Editor.Controls.PropertyEditors;
 public partial class StringPropertyEditor : UserControl, IPropertyEditor
 {
     private object? _target;
+    private INotifyPropertyChanged? _observableTarget;
+    private bool _isUpdating = false;
 
     public PropertyDescriptor Descriptor { get; }
     public Control Control => this;
@@ -48,13 +51,46 @@ public partial class StringPropertyEditor : UserControl, IPropertyEditor
     {
         _target = target ?? throw new ArgumentNullException(nameof(target));
 
-        // Load current value
-        var currentValue = Descriptor.Getter(_target) as string ?? string.Empty;
-        ValueTextBox.Text = currentValue;
+        if (target is INotifyPropertyChanged observable)
+        {
+            _observableTarget = observable;
+            _observableTarget.PropertyChanged += OnTargetPropertyChanged;
+        }
+
+        UpdateFromTarget();
+    }
+
+    private void UpdateFromTarget()
+    {
+        if (_target == null) return;
+
+        _isUpdating = true;
+        try
+        {
+            var currentValue = Descriptor.Getter(_target) as string ?? string.Empty;
+            ValueTextBox.Text = currentValue;
+        }
+        finally
+        {
+            _isUpdating = false;
+        }
+    }
+
+    private void OnTargetPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == Descriptor.Name)
+        {
+            UpdateFromTarget();
+        }
     }
 
     public void Unbind()
     {
+        if (_observableTarget != null)
+        {
+            _observableTarget.PropertyChanged -= OnTargetPropertyChanged;
+            _observableTarget = null;
+        }
         _target = null;
         ValueTextBox.Text = string.Empty;
     }
@@ -65,7 +101,7 @@ public partial class StringPropertyEditor : UserControl, IPropertyEditor
         if (e.Property.Name != nameof(ValueTextBox.Text))
             return;
 
-        if (_target == null || Descriptor.Setter == null)
+        if (_isUpdating || _target == null || Descriptor.Setter == null)
             return;
 
         // Update target object

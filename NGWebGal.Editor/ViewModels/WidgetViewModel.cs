@@ -53,15 +53,28 @@ public partial class WidgetViewModel : ObservableObject, IDisposable
             using var canvas = new SKCanvas(_cachedBitmap);
             canvas.Clear(SKColors.Transparent);
 
-            // Update layer properties
-            CoreLayer.Position = new NGWebGal.Types.IVector(0, 0); // Render at 0,0 in the bitmap
-            CoreLayer.Size = new NGWebGal.Types.IVector(Width, Height);
+            // CRITICAL: Save current Position/Size, then reset to (0,0) for rendering to cache
+            var savedPosition = CoreLayer.Position;
+            var savedSize = CoreLayer.Size;
 
-            // IMPORTANT: DoAnimation initializes colors and animation data
-            CoreLayer.DoAnimation(0);
+            try
+            {
+                // Render at origin (0,0) within the cache bitmap
+                CoreLayer.Position = new NGWebGal.Types.IVector(0, 0);
+                CoreLayer.Size = new NGWebGal.Types.IVector(Width, Height);
 
-            // Render to bitmap
-            CoreLayer.Render(canvas, force: true);
+                // IMPORTANT: DoAnimation initializes colors and animation data
+                CoreLayer.DoAnimation(0);
+
+                // Render to bitmap at (0, 0)
+                CoreLayer.Render(canvas, force: true);
+            }
+            finally
+            {
+                // CRITICAL: Restore actual Position/Size immediately after rendering
+                CoreLayer.Position = savedPosition;
+                CoreLayer.Size = savedSize;
+            }
 
             _bitmapDirty = false;
         }
@@ -123,6 +136,46 @@ public partial class WidgetViewModel : ObservableObject, IDisposable
     private int _height;
 
     /// <summary>
+    /// Gets or sets the position (X, Y) as an IVector for property panel binding.
+    /// </summary>
+    public NGWebGal.Types.IVector Position
+    {
+        get => new NGWebGal.Types.IVector(X, Y);
+        set
+        {
+            if (value.X != X || value.Y != Y)
+            {
+                X = value.X;
+                Y = value.Y;
+                OnPropertyChanged(nameof(Position));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the size (Width, Height) as an IVector for property panel binding.
+    /// </summary>
+    public NGWebGal.Types.IVector Size
+    {
+        get => new NGWebGal.Types.IVector(Width, Height);
+        set
+        {
+            if (value.X != Width || value.Y != Height)
+            {
+                Width = value.X;
+                Height = value.Y;
+                OnPropertyChanged(nameof(Size));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the offset as an IVector for property panel binding.
+    /// </summary>
+    [ObservableProperty]
+    private NGWebGal.Types.IVector _offset = new NGWebGal.Types.IVector(0, 0);
+
+    /// <summary>
     /// Gets or sets whether the widget is visible.
     /// </summary>
     [ObservableProperty]
@@ -145,6 +198,53 @@ public partial class WidgetViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private int _zIndex;
+
+    /// <summary>
+    /// Called when X property changes. Syncs to CoreLayer and notifies Position changed.
+    /// </summary>
+    partial void OnXChanged(int value)
+    {
+        OnPropertyChanged(nameof(Position));
+        SyncToLayer();
+    }
+
+    /// <summary>
+    /// Called when Y property changes. Syncs to CoreLayer and notifies Position changed.
+    /// </summary>
+    partial void OnYChanged(int value)
+    {
+        OnPropertyChanged(nameof(Position));
+        SyncToLayer();
+    }
+
+    /// <summary>
+    /// Called when Width property changes. Syncs to CoreLayer and notifies Size changed.
+    /// </summary>
+    partial void OnWidthChanged(int value)
+    {
+        OnPropertyChanged(nameof(Size));
+        SyncToLayer();
+        InvalidateBitmap(); // Size change requires bitmap re-render
+    }
+
+    /// <summary>
+    /// Called when Height property changes. Syncs to CoreLayer and notifies Size changed.
+    /// </summary>
+    partial void OnHeightChanged(int value)
+    {
+        OnPropertyChanged(nameof(Size));
+        SyncToLayer();
+        InvalidateBitmap(); // Size change requires bitmap re-render
+    }
+
+    /// <summary>
+    /// Called when Offset property changes. Syncs to CoreLayer.
+    /// </summary>
+    partial void OnOffsetChanged(NGWebGal.Types.IVector value)
+    {
+        SyncToLayer();
+        InvalidateBitmap();
+    }
 
     private readonly PropertyChangedEventHandler? _propertyChangedHandler;
 
@@ -169,6 +269,7 @@ public partial class WidgetViewModel : ObservableObject, IDisposable
         _enable = widget.Enable;
         _text = widget.Text;
         _zIndex = widget.ZIndex;
+        _offset = new NGWebGal.Types.IVector(0, 0); // Initialize offset
 
         // Subscribe to property changes to sync back to model and mark dirty
         _propertyChangedHandler = (_, e) =>
@@ -223,6 +324,21 @@ public partial class WidgetViewModel : ObservableObject, IDisposable
             case nameof(Enable): _model.Enable = Enable; break;
             case nameof(Text): _model.Text = Text; break;
             case nameof(ZIndex): _model.ZIndex = ZIndex; break;
+            // Position, Size, Offset are composite properties - no need to sync
+        }
+    }
+
+    /// <summary>
+    /// Synchronizes ViewModel properties to CoreLayer (unidirectional: ViewModel → CoreLayer).
+    /// This is the single source of truth for Position/Size/Offset.
+    /// </summary>
+    private void SyncToLayer()
+    {
+        if (CoreLayer != null)
+        {
+            CoreLayer.Position = new NGWebGal.Types.IVector(X, Y);
+            CoreLayer.Size = new NGWebGal.Types.IVector(Width, Height);
+            CoreLayer.Offset = Offset;
         }
     }
 

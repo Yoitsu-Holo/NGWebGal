@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using SkiaSharp;
 using NGWebGal.Animations;
-using NGWebGal.Extensions;
+using NGWebGal.Extend.SkiaSharp;
 using NGWebGal.Handler;
 using NGWebGal.Types;
 

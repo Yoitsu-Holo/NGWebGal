@@ -6,14 +6,15 @@
         <TextBlock Grid.Column="0"
                    x:Name="LabelTextBlock"
                    VerticalAlignment="Center"
-                   Margin="0,0,4,0"
-                   FontSize="12"
+                   Margin="0,0,6,0"
+                   FontSize="11"
                    FontWeight="SemiBold"
                    Foreground="#555555" />
         <TextBox Grid.Column="1"
                  x:Name="ValueTextBox"
-                 FontSize="12"
-                 Height="16"
+                 FontSize="11"
+                 MinHeight="22"
+                 VerticalContentAlignment="Center"
                  HorizontalAlignment="Stretch"
                  Watermark="Enter text..." />
     </Grid>

@@ -10,23 +10,23 @@
         <StackPanel Grid.Column="0" Spacing="2">
             <!-- Title -->
             <TextBlock x:Name="PropertyNameLabel"
-                       FontSize="12"
+                       FontSize="11"
                        FontWeight="Bold"
                        Margin="0,0,0,2" />
 
             <!-- A (Alpha) -->
             <Grid ColumnDefinitions="Auto,*">
                 <TextBlock Grid.Column="0" Text="A:" VerticalAlignment="Center"
-                           Margin="0,0,4,0" FontSize="12" Width="20"/>
+                           Margin="0,0,4,0" FontSize="10" Width="18"/>
                 <NumericUpDown Grid.Column="1"
                                Name="ANumeric"
                                Minimum="0"
                                Maximum="255"
                                Increment="1"
                                FormatString="F0"
-                               MinWidth="32"
-                               Height="16"
-                               FontSize="12"
+                               MinWidth="50"
+                               Height="22"
+                               FontSize="11"
                                ShowButtonSpinner="True"
                                ButtonSpinnerLocation="Right"
                                HorizontalAlignment="Stretch" />
@@ -35,16 +35,16 @@
             <!-- R (Red) -->
             <Grid ColumnDefinitions="Auto,*">
                 <TextBlock Grid.Column="0" Text="R:" VerticalAlignment="Center"
-                           Margin="0,0,4,0" FontSize="12" Width="20"/>
+                           Margin="0,0,4,0" FontSize="10" Width="18"/>
                 <NumericUpDown Grid.Column="1"
                                Name="RNumeric"
                                Minimum="0"
                                Maximum="255"
                                Increment="1"
                                FormatString="F0"
-                               MinWidth="32"
-                               Height="16"
-                               FontSize="12"
+                               MinWidth="50"
+                               Height="22"
+                               FontSize="11"
                                ShowButtonSpinner="True"
                                ButtonSpinnerLocation="Right"
                                HorizontalAlignment="Stretch" />
@@ -53,16 +53,16 @@
             <!-- G (Green) -->
             <Grid ColumnDefinitions="Auto,*">
                 <TextBlock Grid.Column="0" Text="G:" VerticalAlignment="Center"
-                           Margin="0,0,4,0" FontSize="12" Width="20"/>
+                           Margin="0,0,4,0" FontSize="10" Width="18"/>
                 <NumericUpDown Grid.Column="1"
                                Name="GNumeric"
                                Minimum="0"
                                Maximum="255"
                                Increment="1"
                                FormatString="F0"
-                               MinWidth="32"
-                               Height="16"
-                               FontSize="12"
+                               MinWidth="50"
+                               Height="22"
+                               FontSize="11"
                                ShowButtonSpinner="True"
                                ButtonSpinnerLocation="Right"
                                HorizontalAlignment="Stretch" />
@@ -71,16 +71,16 @@
             <!-- B (Blue) -->
             <Grid ColumnDefinitions="Auto,*">
                 <TextBlock Grid.Column="0" Text="B:" VerticalAlignment="Center"
-                           Margin="0,0,4,0" FontSize="12" Width="20"/>
+                           Margin="0,0,4,0" FontSize="10" Width="18"/>
                 <NumericUpDown Grid.Column="1"
                                Name="BNumeric"
                                Minimum="0"
                                Maximum="255"
                                Increment="1"
                                FormatString="F0"
-                               MinWidth="32"
-                               Height="16"
-                               FontSize="12"
+                               MinWidth="50"
+                               Height="22"
+                               FontSize="11"
                                ShowButtonSpinner="True"
                                ButtonSpinnerLocation="Right"
                                HorizontalAlignment="Stretch" />

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using SkiaSharp;
 using NGWebGal.Global;
 using NGWebGal.Types;
-using NGWebGal.Extensions;
+using NGWebGal.Extend.SkiaSharp;
 using NGWebGal.Handler.Event;
 
 namespace NGWebGal.Layer.Controller;

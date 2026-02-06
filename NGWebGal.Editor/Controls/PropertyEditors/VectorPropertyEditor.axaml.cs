@@ -1,7 +1,9 @@
 using System;
+using System.ComponentModel;
 using Avalonia.Controls;
-using NGWebGal.Editor.Services.PropertyReflection;
+using Avalonia.Threading;
 using NGWebGal.Types;
+using PropertyDescriptor = NGWebGal.Editor.Services.PropertyReflection.PropertyDescriptor;
 
 namespace NGWebGal.Editor.Controls.PropertyEditors;
 
@@ -12,6 +14,9 @@ public partial class VectorPropertyEditor : UserControl, IPropertyEditor
 {
     private object? _target;
     private bool _isUpdating;
+    private DispatcherTimer? _updateThrottle;
+    private bool _hasPendingUpdate;
+    private INotifyPropertyChanged? _observableTarget;
 
     public PropertyDescriptor Descriptor { get; }
     public Control Control => this;
@@ -25,6 +30,21 @@ public partial class VectorPropertyEditor : UserControl, IPropertyEditor
 
         InitializeComponent();
         DataContext = this;
+
+        // Initialize throttle timer
+        _updateThrottle = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(100)
+        };
+        _updateThrottle.Tick += (_, _) =>
+        {
+            _updateThrottle.Stop();
+            if (_hasPendingUpdate)
+            {
+                _hasPendingUpdate = false;
+                ApplyPendingUpdate();
+            }
+        };
 
         // Set property name label
         var nameLabel = this.FindControl<TextBlock>("PropertyNameLabel");
@@ -46,12 +66,39 @@ public partial class VectorPropertyEditor : UserControl, IPropertyEditor
     public void Bind(object target)
     {
         _target = target ?? throw new ArgumentNullException(nameof(target));
+
+        // Subscribe to PropertyChanged if target is observable
+        if (target is INotifyPropertyChanged observable)
+        {
+            _observableTarget = observable;
+            _observableTarget.PropertyChanged += OnTargetPropertyChanged;
+        }
+
         UpdateFromTarget();
     }
 
     public void Unbind()
     {
+        if (_observableTarget != null)
+        {
+            _observableTarget.PropertyChanged -= OnTargetPropertyChanged;
+            _observableTarget = null;
+        }
+
+        _updateThrottle?.Stop();
         _target = null;
+    }
+
+    private void OnTargetPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Only update if the changed property matches our descriptor
+        if (e.PropertyName == Descriptor.Name ||
+            e.PropertyName == "X" ||
+            e.PropertyName == "Y" ||
+            e.PropertyName == "Position")
+        {
+            UpdateFromTarget();
+        }
     }
 
     private void UpdateFromTarget()
@@ -88,7 +135,9 @@ public partial class VectorPropertyEditor : UserControl, IPropertyEditor
         if (_target == null || _isUpdating || Descriptor.Setter == null)
             return;
 
-        UpdateTarget();
+        _hasPendingUpdate = true;
+        _updateThrottle?.Stop();
+        _updateThrottle?.Start();
     }
 
     private void OnYValueChanged(object? sender, NumericUpDownValueChangedEventArgs e)
@@ -96,6 +145,13 @@ public partial class VectorPropertyEditor : UserControl, IPropertyEditor
         if (_target == null || _isUpdating || Descriptor.Setter == null)
             return;
 
+        _hasPendingUpdate = true;
+        _updateThrottle?.Stop();
+        _updateThrottle?.Start();
+    }
+
+    private void ApplyPendingUpdate()
+    {
         UpdateTarget();
     }
 

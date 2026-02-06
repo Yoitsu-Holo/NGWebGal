@@ -6,28 +6,32 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- Uncomment to enable package lock file for reproducible builds -->
+    <!-- <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile> -->
   </PropertyGroup>
 
-  <!-- Default to Library (for use by Editor), unless explicitly set to run standalone -->
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug' And '$(RunStandalone)' == 'true'">
+  <!-- Default to Exe in Debug, Library when explicitly disabled -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <OutputType>Exe</OutputType>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' == 'Release' And '$(RunStandalone)' == 'true'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <OutputType>WinExe</OutputType>
   </PropertyGroup>
-  <!-- Default: Build as Library when referenced -->
-  <PropertyGroup Condition="'$(RunStandalone)' != 'true'">
+  <!-- Override to Library when explicitly building as library -->
+  <PropertyGroup Condition="'$(BuildAsLibrary)' == 'true'">
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.9" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.9" />
-    <PackageReference Include="Avalonia.Skia" Version="11.3.9" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.9" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.9" />
+    <PackageReference Include="Avalonia" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
-    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Irony" Version="1.5.3" />
     <PackageReference Include="Irony.Interpreter" Version="1.5.3" />
@@ -35,7 +39,7 @@
     <!--Condition
     below is needed to remove Avalonia.Diagnostics package from build output in Release
     configuration.-->
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.9">
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.11">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>

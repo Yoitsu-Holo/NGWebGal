@@ -23,6 +23,23 @@ public class EditorCanvas : Control
     private Point _dragStartWidgetPosition;
     private bool _isRendering = false; // Prevent re-entrant rendering
 
+    #region Constants
+    // Widget rendering constants
+    private const int TypeLabelFontSize = 12;
+    private const int NameLabelFontSize = 11;
+    private const double SelectedBorderThickness = 3.0;
+    private const double DefaultBorderThickness = 2.0;
+    private const byte TextBackgroundAlpha = 180; // ~70% opacity for readability
+    private const byte WidgetFillAlpha = 128; // 50% transparency
+    private const double LabelPaddingX = 4.0;
+    private const double LabelPaddingY = 4.0;
+    private const double LabelVerticalSpacing = 2.0;
+    private const int DefaultWidgetSize = 100;
+    private static readonly Color CanvasBackgroundColor = Color.FromRgb(250, 250, 250);
+    private static readonly Color CanvasBorderColor = Color.FromRgb(204, 204, 204);
+    private const double CanvasBorderThickness = 2.0;
+    #endregion
+
     #region Avalonia Properties
 
     /// <summary>
@@ -71,6 +88,51 @@ public class EditorCanvas : Control
         set => SetValue(AddWidgetCommandProperty, value);
     }
 
+    /// <summary>
+    /// Defines the ShowPercentageLines property.
+    /// </summary>
+    public static readonly StyledProperty<bool> ShowPercentageLinesProperty =
+        AvaloniaProperty.Register<EditorCanvas, bool>(nameof(ShowPercentageLines), true);
+
+    /// <summary>
+    /// Gets or sets whether to show percentage guide lines.
+    /// </summary>
+    public bool ShowPercentageLines
+    {
+        get => GetValue(ShowPercentageLinesProperty);
+        set => SetValue(ShowPercentageLinesProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the ShowGridLines property.
+    /// </summary>
+    public static readonly StyledProperty<bool> ShowGridLinesProperty =
+        AvaloniaProperty.Register<EditorCanvas, bool>(nameof(ShowGridLines), false);
+
+    /// <summary>
+    /// Gets or sets whether to show grid lines.
+    /// </summary>
+    public bool ShowGridLines
+    {
+        get => GetValue(ShowGridLinesProperty);
+        set => SetValue(ShowGridLinesProperty, value);
+    }
+
+    /// <summary>
+    /// Defines the GridSpacing property.
+    /// </summary>
+    public static readonly StyledProperty<int> GridSpacingProperty =
+        AvaloniaProperty.Register<EditorCanvas, int>(nameof(GridSpacing), 50);
+
+    /// <summary>
+    /// Gets or sets the grid spacing in pixels.
+    /// </summary>
+    public int GridSpacing
+    {
+        get => GetValue(GridSpacingProperty);
+        set => SetValue(GridSpacingProperty, value);
+    }
+
     #endregion
 
     /// <summary>
@@ -96,8 +158,10 @@ public class EditorCanvas : Control
     /// </summary>
     protected override Size MeasureOverride(Size availableSize)
     {
-        // EditorCanvas should take all available space
-        return availableSize;
+        // Use explicit Width/Height if set, otherwise take available space
+        double width = !double.IsNaN(Width) ? Width : availableSize.Width;
+        double height = !double.IsNaN(Height) ? Height : availableSize.Height;
+        return new Size(width, height);
     }
 
     /// <summary>
@@ -105,7 +169,10 @@ public class EditorCanvas : Control
     /// </summary>
     protected override Size ArrangeOverride(Size finalSize)
     {
-        return finalSize;
+        // Use explicit Width/Height if set, otherwise use finalSize
+        double width = !double.IsNaN(Width) ? Width : finalSize.Width;
+        double height = !double.IsNaN(Height) ? Height : finalSize.Height;
+        return new Size(width, height);
     }
 
     /// <summary>
@@ -173,6 +240,26 @@ public class EditorCanvas : Control
     /// </summary>
     private void OnWidgetsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        // Subscribe to PropertyChanged for newly added widgets
+        if (e.NewItems != null)
+        {
+            foreach (WidgetViewModel widget in e.NewItems)
+            {
+                widget.PropertyChanged += OnWidgetPropertyChanged;
+                System.Diagnostics.Debug.WriteLine($"[EditorCanvas] Subscribed to PropertyChanged for newly added widget: {widget.Name}");
+            }
+        }
+
+        // Unsubscribe from removed widgets to prevent memory leaks
+        if (e.OldItems != null)
+        {
+            foreach (WidgetViewModel widget in e.OldItems)
+            {
+                widget.PropertyChanged -= OnWidgetPropertyChanged;
+                System.Diagnostics.Debug.WriteLine($"[EditorCanvas] Unsubscribed from PropertyChanged for removed widget: {widget.Name}");
+            }
+        }
+
         InvalidateVisual();
     }
 
@@ -193,8 +280,25 @@ public class EditorCanvas : Control
         {
             base.Render(context);
 
-            // Draw canvas background explicitly
-            context.DrawRectangle(new SolidColorBrush(Color.FromRgb(245, 245, 245)), null, new Rect(0, 0, Bounds.Width, Bounds.Height));
+            // Draw canvas background with border
+            var canvasRect = new Rect(0, 0, Bounds.Width, Bounds.Height);
+            var backgroundBrush = new SolidColorBrush(CanvasBackgroundColor);
+            var borderPen = new Pen(new SolidColorBrush(CanvasBorderColor), CanvasBorderThickness);
+            context.DrawRectangle(backgroundBrush, borderPen, canvasRect);
+
+            // Render guide lines (before widgets)
+            var canvasSize = new Size(Bounds.Width, Bounds.Height);
+
+            if (ShowGridLines)
+            {
+                GuideLineRenderer.RenderGridLines(context, canvasSize, GridSpacing);
+            }
+
+            if (ShowPercentageLines)
+            {
+                var percentages = new List<double> { 0.1, 0.25, 0.5, 0.75, 0.9 };
+                GuideLineRenderer.RenderPercentageLines(context, canvasSize, percentages);
+            }
 
             if (Widgets == null)
             {
@@ -209,6 +313,16 @@ public class EditorCanvas : Control
             foreach (var widget in sortedWidgets)
             {
                 DrawWidget(context, widget);
+            }
+
+            // Render dynamic crosshair when dragging a widget
+            if (_draggedWidget != null)
+            {
+                var center = new Point(
+                    _draggedWidget.X + _draggedWidget.Width / 2.0,
+                    _draggedWidget.Y + _draggedWidget.Height / 2.0
+                );
+                GuideLineRenderer.RenderDynamicCrosshair(context, center, canvasSize);
             }
         }
         finally
@@ -245,7 +359,7 @@ public class EditorCanvas : Control
             // Draw selection border if needed
             if (widget == SelectedWidget)
             {
-                var borderPen = new Pen(Brushes.Blue, 3);
+                var borderPen = new Pen(Brushes.Blue, SelectedBorderThickness);
                 context.DrawRectangle(null, borderPen, rect);
             }
         }
@@ -257,14 +371,13 @@ public class EditorCanvas : Control
             // Determine border: selected widgets get thicker blue border
             var isSelected = widget == SelectedWidget;
             var borderBrush = isSelected ? Brushes.Blue : Brushes.Black;
-            var borderPen = new Pen(borderBrush, isSelected ? 3 : 2);
+            var borderPen = new Pen(borderBrush, isSelected ? SelectedBorderThickness : DefaultBorderThickness);
 
             // Draw filled rectangle
             context.DrawRectangle(fillBrush, borderPen, rect);
 
             // Draw type and name labels with better visibility
             var typeface = new Typeface("Inter");
-            var fontSize = 12;
             var foreground = Brushes.Black;
 
             var typeText = new FormattedText(
@@ -272,7 +385,7 @@ public class EditorCanvas : Control
                 System.Globalization.CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight,
                 typeface,
-                fontSize,
+                TypeLabelFontSize,
                 foreground);
 
             var nameText = new FormattedText(
@@ -280,12 +393,12 @@ public class EditorCanvas : Control
                 System.Globalization.CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight,
                 typeface,
-                fontSize - 1,
+                NameLabelFontSize,
                 foreground);
 
             // Position labels inside the widget
-            var typePosition = new Point(widget.X + 4, widget.Y + 4);
-            var namePosition = new Point(widget.X + 4, widget.Y + 4 + fontSize + 2);
+            var typePosition = new Point(widget.X + LabelPaddingX, widget.Y + LabelPaddingY);
+            var namePosition = new Point(widget.X + LabelPaddingX, widget.Y + LabelPaddingY + TypeLabelFontSize + LabelVerticalSpacing);
 
             // Draw semi-transparent white background for text (better readability)
             var typeBgRect = new Rect(typePosition.X - 2, typePosition.Y - 1,
@@ -293,7 +406,7 @@ public class EditorCanvas : Control
             var nameBgRect = new Rect(namePosition.X - 2, namePosition.Y - 1,
                                        nameText.Width + 4, nameText.Height + 2);
 
-            var textBackgroundBrush = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255));
+            var textBackgroundBrush = new SolidColorBrush(Color.FromArgb(TextBackgroundAlpha, 255, 255, 255));
             context.DrawRectangle(textBackgroundBrush, null, typeBgRect);
             context.DrawRectangle(textBackgroundBrush, null, nameBgRect);
 
@@ -326,7 +439,7 @@ public class EditorCanvas : Control
         };
 
         // 50% transparency (Alpha = 128) for color blending effect
-        return new SolidColorBrush(Color.FromArgb(128, color.R, color.G, color.B));
+        return new SolidColorBrush(Color.FromArgb(WidgetFillAlpha, color.R, color.G, color.B));
     }
 
     /// <summary>
@@ -382,9 +495,24 @@ public class EditorCanvas : Control
         _draggedWidget.X = (int)(_dragStartWidgetPosition.X + delta.X);
         _draggedWidget.Y = (int)(_dragStartWidgetPosition.Y + delta.Y);
 
+        // Apply snap-to-grid
+        var canvasSize = new Size(Bounds.Width, Bounds.Height);
+        var widgetCenter = new Point(_draggedWidget.X + _draggedWidget.Width / 2.0, _draggedWidget.Y + _draggedWidget.Height / 2.0);
+        var snappedCenter = Services.SnapToGridService.SnapPosition(widgetCenter, canvasSize, 10);
+
+        // Update widget position based on snapped center
+        _draggedWidget.X = (int)(snappedCenter.X - _draggedWidget.Width / 2.0);
+        _draggedWidget.Y = (int)(snappedCenter.Y - _draggedWidget.Height / 2.0);
+
         // Clamp to canvas bounds (prevent negative positions)
         _draggedWidget.X = Math.Max(0, _draggedWidget.X);
         _draggedWidget.Y = Math.Max(0, _draggedWidget.Y);
+
+        // Clamp to canvas bounds (prevent going beyond right/bottom edges)
+        int maxX = (int)(Bounds.Width - _draggedWidget.Width);
+        int maxY = (int)(Bounds.Height - _draggedWidget.Height);
+        _draggedWidget.X = Math.Min(_draggedWidget.X, Math.Max(0, maxX));
+        _draggedWidget.Y = Math.Min(_draggedWidget.Y, Math.Max(0, maxY));
 
         InvalidateVisual();
         e.Handled = true;
@@ -395,8 +523,12 @@ public class EditorCanvas : Control
     /// </summary>
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        _draggedWidget = null;
-        e.Handled = true;
+        if (_draggedWidget != null)
+        {
+            _draggedWidget = null;
+            InvalidateVisual(); // Force re-render to hide crosshair immediately
+            e.Handled = true;
+        }
     }
 
     /// <summary>
@@ -443,11 +575,20 @@ public class EditorCanvas : Control
         }
 
         // Extract widget type from drag data
-        var widgetType = (WidgetType)e.Data.Get("WidgetType")!;
+        var widgetTypeObj = e.Data.Get("WidgetType");
+        if (widgetTypeObj is not WidgetType widgetType)
+        {
+            return;
+        }
         #pragma warning restore CS0618 // Type or member is obsolete
 
         // Get drop position
         var dropPosition = e.GetPosition(this);
+
+        // Clamp drop position to canvas bounds (assume min widget size 100x100)
+        double clampedX = Math.Max(0, Math.Min(dropPosition.X, Bounds.Width - DefaultWidgetSize));
+        double clampedY = Math.Max(0, Math.Min(dropPosition.Y, Bounds.Height - DefaultWidgetSize));
+        dropPosition = new Point(clampedX, clampedY);
 
         // Execute AddWidgetCommand with type and position
         if (AddWidgetCommand?.CanExecute((widgetType, dropPosition)) == true)

@@ -25,6 +25,12 @@ public partial class PropertyPanelViewModel : ObservableObject
     private ILayer? _selectedLayer;
 
     /// <summary>
+    /// Gets or sets the currently bound widget view model
+    /// </summary>
+    [ObservableProperty]
+    private WidgetViewModel? _selectedWidget;
+
+    /// <summary>
     /// Gets the collection of property editors grouped by type hierarchy
     /// </summary>
     public ObservableCollection<PropertyGroupViewModel> PropertyGroups { get; } = new();
@@ -44,9 +50,11 @@ public partial class PropertyPanelViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Loads a layer and creates property editors for it
+    /// Loads a layer and creates property editors for it.
+    /// [DEPRECATED] Use LoadWidget() for WidgetViewModel-based binding.
     /// </summary>
     /// <param name="layer">The layer to edit</param>
+    [Obsolete("Use LoadWidget() for better data flow. LoadLayer() is kept for backwards compatibility.")]
     public void LoadLayer(ILayer? layer)
     {
         // Unbind all existing editors
@@ -103,6 +111,10 @@ public partial class PropertyPanelViewModel : ObservableObject
 
                     var editor = _editorFactory.CreateEditor(abbreviatedProperty);
 
+                    // Skip if no editor available for this property type
+                    if (editor == null)
+                        continue;
+
                     // Bind editor to layer
                     editor.Bind(layer);
 
@@ -116,11 +128,6 @@ public partial class PropertyPanelViewModel : ObservableObject
                     // Skip editors not yet implemented
                     continue;
                 }
-                catch (NotSupportedException)
-                {
-                    // Skip unsupported property types
-                    continue;
-                }
             }
 
             // Only add group if it has editors
@@ -132,6 +139,111 @@ public partial class PropertyPanelViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Loads a WidgetViewModel and creates property editors for it.
+    /// Properties from ViewModel (Position, Size, Offset) take precedence over CoreLayer properties.
+    /// </summary>
+    /// <param name="widget">The WidgetViewModel to edit</param>
+    public void LoadWidget(WidgetViewModel? widget)
+    {
+        // Unbind all existing editors
+        foreach (var group in PropertyGroups)
+        {
+            foreach (var editor in group.Editors)
+            {
+                editor.ValueChanged -= OnEditorValueChanged;
+                editor.Unbind();
+            }
+        }
+
+        PropertyGroups.Clear();
+        SelectedWidget = widget;
+        SelectedLayer = widget?.CoreLayer; // Keep SelectedLayer for backwards compatibility
+
+        if (widget == null)
+            return;
+
+        // Discover properties using ViewModel-aware reflection
+        var properties = _reflectionEngine.DiscoverViewModelProperties(widget);
+
+        // Group properties by DeclaringType
+        var groupedProperties = properties
+            .GroupBy(p => p.DeclaringType)
+            .OrderBy(g => properties.First(p => p.DeclaringType == g.Key).HierarchyDepth);
+
+        // Create groups and editors
+        foreach (var group in groupedProperties)
+        {
+            var groupViewModel = new PropertyGroupViewModel
+            {
+                GroupName = FormatGroupName(group.Key),
+                HierarchyDepth = properties.First(p => p.DeclaringType == group.Key).HierarchyDepth
+            };
+
+            foreach (var prop in group.OrderBy(p => p.Category).ThenBy(p => p.Name))
+            {
+                try
+                {
+                    // Create editor with abbreviated name
+                    var abbreviatedProperty = new PropertyDescriptor
+                    {
+                        Name = GetDisplayName(prop.Name),
+                        PropertyPath = prop.PropertyPath,
+                        PropertyType = prop.PropertyType,
+                        DeclaringType = prop.DeclaringType,
+                        HierarchyDepth = prop.HierarchyDepth,
+                        IsReadOnly = prop.IsReadOnly,
+                        IsExpandable = prop.IsExpandable,
+                        Category = prop.Category,
+                        Getter = prop.Getter,
+                        Setter = prop.Setter
+                    };
+
+                    var editor = _editorFactory.CreateEditor(abbreviatedProperty);
+                    if (editor != null)
+                    {
+                        // IMPORTANT: Bind to WidgetViewModel, not CoreLayer
+                        editor.Bind(widget);
+                        editor.ValueChanged += OnEditorValueChanged;
+                        groupViewModel.Editors.Add(editor);
+                    }
+                }
+                catch (NotSupportedException ex)
+                {
+                    // Skip properties that don't have editors (e.g., Object type, complex types)
+                    System.Diagnostics.Debug.WriteLine($"[PropertyPanelViewModel] Skipping property {prop.Name} ({prop.PropertyType.Name}): {ex.Message}");
+                    continue;
+                }
+            }
+
+            if (groupViewModel.Editors.Count > 0)
+                PropertyGroups.Add(groupViewModel);
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[PropertyPanelViewModel] Loaded {PropertyGroups.Sum(g => g.Editors.Count)} editors for widget {widget.Name} (Type: {widget.Type})");
+    }
+
+    /// <summary>
+    /// Formats the type name into a user-friendly group name
+    /// </summary>
+    private string FormatGroupName(Type type)
+    {
+        var name = type.Name;
+
+        // Special handling for WidgetViewModel
+        if (name == "WidgetViewModel")
+            return "LayerBase"; // Show as LayerBase for consistency with CoreLayer properties
+
+        // Remove "Widget" or "Controller" prefix
+        if (name.StartsWith("Widget"))
+            name = name.Substring(6);
+        else if (name.StartsWith("Controller"))
+            name = name.Substring(10);
+
+        // Add spaces before capitals
+        return System.Text.RegularExpressions.Regex.Replace(name, "([a-z])([A-Z])", "$1 $2");
+    }
+
+    /// <summary>
     /// Handles value changes from property editors
     /// </summary>
     private void OnEditorValueChanged(object? sender, EventArgs e)
@@ -139,8 +251,21 @@ public partial class PropertyPanelViewModel : ObservableObject
         if (sender is IPropertyEditor editor)
         {
             System.Diagnostics.Debug.WriteLine($"[PropertyPanel] Property changed: {editor.Descriptor.Name}");
+
+            // Only invalidate bitmap for properties that change visual content
+            // Position and Offset only affect drawing location, not bitmap content
+            var propertyName = editor.Descriptor.Name;
+            bool needsBitmapInvalidation = propertyName != "Pos" &&
+                                          propertyName != "Position" &&
+                                          propertyName != "Offset";
+
+            if (needsBitmapInvalidation)
+            {
+                SelectedWidget?.InvalidateBitmap();
+            }
+
+            _mainViewModel.MarkDirty();
         }
-        OnPropertyChanged();
     }
 
     /// <summary>
@@ -161,37 +286,6 @@ public partial class PropertyPanelViewModel : ObservableObject
         };
     }
 
-    /// <summary>
-    /// Triggers bitmap invalidation when a property changes
-    /// </summary>
-    /// <remarks>
-    /// This method is called by property editors when values change.
-    /// It finds the corresponding WidgetViewModel and calls InvalidateBitmap().
-    /// </remarks>
-    public void OnPropertyChanged()
-    {
-        if (SelectedLayer == null)
-        {
-            System.Diagnostics.Debug.WriteLine("[PropertyPanel] OnPropertyChanged: SelectedLayer is null");
-            return;
-        }
-
-        System.Diagnostics.Debug.WriteLine($"[PropertyPanel] OnPropertyChanged: Looking for widget with layer type {SelectedLayer.GetType().Name}");
-
-        // Find the WidgetViewModel that contains this layer
-        var widget = _mainViewModel.Widgets.FirstOrDefault(w => w.CoreLayer == SelectedLayer);
-        if (widget != null)
-        {
-            System.Diagnostics.Debug.WriteLine($"[PropertyPanel] Found WidgetViewModel, calling InvalidateBitmap");
-            widget.InvalidateBitmap();
-            _mainViewModel.MarkDirty();
-            System.Diagnostics.Debug.WriteLine($"[PropertyPanel] InvalidateBitmap called successfully");
-        }
-        else
-        {
-            System.Diagnostics.Debug.WriteLine($"[PropertyPanel] WARNING: Could not find WidgetViewModel for layer");
-        }
-    }
 }
 
 /// <summary>
@@ -204,6 +298,12 @@ public partial class PropertyGroupViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private string _typeName = string.Empty;
+
+    /// <summary>
+    /// Formatted group name for display
+    /// </summary>
+    [ObservableProperty]
+    private string _groupName = string.Empty;
 
     /// <summary>
     /// Hierarchy depth (0 = concrete type, higher = base types)

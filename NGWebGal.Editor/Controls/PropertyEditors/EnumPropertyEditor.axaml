@@ -5,11 +5,11 @@
     <StackPanel Spacing="2" HorizontalAlignment="Stretch">
         <TextBlock x:Name="LabelTextBlock"
                    FontWeight="SemiBold"
-                   FontSize="12"
+                   FontSize="11"
                    Foreground="#555555" />
         <ComboBox x:Name="ValueComboBox"
-                  FontSize="12"
-                  Height="16"
+                  FontSize="11"
+                  MinHeight="24"
                   HorizontalAlignment="Stretch" />
     </StackPanel>
 </UserControl>

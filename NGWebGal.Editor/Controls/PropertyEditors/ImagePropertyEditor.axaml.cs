@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using Avalonia;
@@ -20,14 +21,15 @@ public partial class ImagePropertyEditor : UserControl, IPropertyEditor
     private bool _isUpdating;
     private static Bitmap? _checkerboardBitmap;
     private string? _currentPath;
+    private INotifyPropertyChanged? _observableTarget;
 
-    public PropertyDescriptor Descriptor { get; }
+    public Services.PropertyReflection.PropertyDescriptor Descriptor { get; }
     public Control Control => this;
     public string PropertyName => Descriptor.Name;
 
     public event EventHandler? ValueChanged;
 
-    public ImagePropertyEditor(PropertyDescriptor descriptor)
+    public ImagePropertyEditor(Services.PropertyReflection.PropertyDescriptor descriptor)
     {
         Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
 
@@ -101,12 +103,32 @@ public partial class ImagePropertyEditor : UserControl, IPropertyEditor
     public void Bind(object target)
     {
         _target = target ?? throw new ArgumentNullException(nameof(target));
+
+        if (target is INotifyPropertyChanged observable)
+        {
+            _observableTarget = observable;
+            _observableTarget.PropertyChanged += OnTargetPropertyChanged;
+        }
+
         UpdateFromTarget();
     }
 
     public void Unbind()
     {
+        if (_observableTarget != null)
+        {
+            _observableTarget.PropertyChanged -= OnTargetPropertyChanged;
+            _observableTarget = null;
+        }
         _target = null;
+    }
+
+    private void OnTargetPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == Descriptor.Name)
+        {
+            UpdateFromTarget();
+        }
     }
 
     private void UpdateFromTarget()

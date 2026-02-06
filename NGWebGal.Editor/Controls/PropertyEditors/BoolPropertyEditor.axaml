@@ -3,7 +3,7 @@
              x:Class="NGWebGal.Editor.Controls.PropertyEditors.BoolPropertyEditor"
              HorizontalAlignment="Stretch">
     <CheckBox x:Name="ValueCheckBox"
-              FontSize="12"
+              FontSize="11"
               Margin="1"
               HorizontalAlignment="Stretch" />
 </UserControl>

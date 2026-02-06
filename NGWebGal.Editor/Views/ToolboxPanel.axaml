@@ -15,20 +15,23 @@
             BorderThickness="1"
             CornerRadius="4"
             Padding="8">
-        <StackPanel Spacing="8">
+        <DockPanel>
             <!-- Title -->
-            <TextBlock Text="Toolbox"
+            <TextBlock DockPanel.Dock="Top"
+                       Text="Toolbox"
                        FontSize="16"
                        FontWeight="Bold"
-                       Foreground="#333333" />
+                       Foreground="#333333"
+                       Margin="0,0,0,8" />
 
             <!-- Separator -->
-            <Border Height="1"
+            <Border DockPanel.Dock="Top"
+                    Height="1"
                     Background="#DDDDDD"
-                    Margin="0,4" />
+                    Margin="0,0,0,8" />
 
             <!-- Toolbox Items List -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="600">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <ListBox Name="ToolboxListBox"
                          Background="Transparent"
                          BorderThickness="0"
@@ -84,6 +87,6 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </ScrollViewer>
-        </StackPanel>
+        </DockPanel>
     </Border>
 </UserControl>

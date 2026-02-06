@@ -1,8 +1,10 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:semi="https://irihi.tech/semi"
              x:Class="NGWebGal.Editor.App"
              RequestedThemeVariant="Default">
     <Application.Styles>
-        <FluentTheme />
+        <!-- Semi.Avalonia Theme: Modern, clean design inspired by Semi Design -->
+        <semi:SemiTheme />
     </Application.Styles>
 </Application>
